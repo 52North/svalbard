@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.n52.svalbard</groupId>
+        <artifactId>svalbard-parent</artifactId>
+        <version>1-SNAPSHOT</version>
+    </parent>
+    
+    <artifactId>svalbard-sensorthings</artifactId>
+    <name>52°North Svalbard SensorThings</name>
+    <packaging>jar</packaging>
+    
+    <dependencies>
+        <dependency>
+            <groupId>org.n52.svalbard</groupId>
+            <artifactId>svalbard</artifactId>
+        </dependency>
+        
+        <!-- <dependency>
+            <groupId>org.n52.svalbard</groupId>
+            <artifactId>svalbard-xmlstream</artifactId>
+        </dependency> -->
+        
+        <dependency>
+            <groupId>org.n52.janmayen</groupId>
+            <artifactId>janmayen</artifactId>
+        </dependency>
+        <!--<dependency>
+            <groupId>org.n52.faroe</groupId>
+            <artifactId>faroe-annotations</artifactId>
+        </dependency>-->
+        <dependency>
+            <groupId>org.n52.shetland</groupId>
+            <artifactId>shetland</artifactId>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.n52.sensorweb.sos</groupId>
+            <artifactId>coding-json-common</artifactId>
+            <version>5.0.0-SNAPSHOT</version>
+            <type>jar</type>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.7.21</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.8.5</version>
+        </dependency>
+        <!--<dependency>
+            <groupId>com.github.fge</groupId>
+            <artifactId>jackson-coreutils</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.fasterxml.jackson.core</groupId>
+                    <artifactId>jackson-databind</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.google.code.findbugs</groupId>
+                    <artifactId>jsr305</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.google.guava</groupId>
+                    <artifactId>guava</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>-->
+        
+        <!-- <dependency>
+            <groupId>com.vividsolutions</groupId>
+            <artifactId>jts</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>joda-time</groupId>
+            <artifactId>joda-time</artifactId>
+        </dependency> -->
+
+        <!-- Testing dependencies -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.hamcrest</groupId>
+            <artifactId>hamcrest-all</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-all</artifactId>
+            <scope>test</scope>
+        </dependency>
+        
+    </dependencies>
+</project>
