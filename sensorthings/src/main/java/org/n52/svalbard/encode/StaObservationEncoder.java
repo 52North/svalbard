@@ -17,70 +17,33 @@
 package org.n52.svalbard.encode;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import java.util.Map;
-import java.util.Set;
-import org.n52.janmayen.http.MediaType;
-import org.n52.janmayen.http.MediaTypes;
-import org.n52.shetland.ogc.SupportedType;
-
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.n52.shetland.ogc.sta.StaObservation;
+import org.n52.sos.encode.json.JSONEncoder;
 import org.n52.svalbard.encode.exception.EncodingException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Encoder for the SensorThings API Observation Entity
+ * SensorThings Observation to JSON
  *
  * @author Martin Kiesow
  */
-public class StaObservationEncoder<OmObservation> extends AbstractDelegatingEncoder<JsonNode, OmObservation> implements ObservationEncoder<JsonNode, OmObservation> {
+public class StaObservationEncoder extends JSONEncoder<StaObservation> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StaObservationEncoder.class);
 
-    @Override
-    public JsonNode encode(OmObservation objectToEncode) throws EncodingException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public StaObservationEncoder() {
+        super(StaObservation.class);
     }
 
     @Override
-    public JsonNode encode(OmObservation objectToEncode, EncodingContext additionalValues) throws EncodingException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
+    public JsonNode encodeJSON(StaObservation t) throws EncodingException {
 
-    @Override
-    public MediaType getContentType() {
-        // TODO separate ContenType "om+json"?
-        return MediaTypes.APPLICATION_JSON;
-    }
+       ObjectNode json = nodeFactory().objectNode();
 
-    @Override
-    public Set<EncoderKey> getKeys() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return json;
     }
-
-    @Override
-    public boolean isObservationAndMeasurmentV20Type() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public boolean shouldObservationsWithSameXBeMerged() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public boolean supportsResultStreamingForMergedValues() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public Set<String> getSupportedResponseFormats(String service, String version) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public Map<String, Set<SupportedType>> getSupportedResponseFormatObservationTypes() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
 
 }

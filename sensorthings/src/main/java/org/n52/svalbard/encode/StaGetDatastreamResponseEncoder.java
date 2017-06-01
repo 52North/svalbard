@@ -17,9 +17,9 @@
 package org.n52.svalbard.encode;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.n52.shetland.ogc.sta.StaDatastream;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -30,8 +30,6 @@ import org.n52.shetland.ogc.sos.Sos2Constants;
 import org.n52.shetland.ogc.sos.SosConstants;
 import org.n52.shetland.ogc.sos.response.GetObservationResponse;
 import org.n52.shetland.ogc.sta.StaConstants;
-import org.n52.shetland.ogc.sta.response.GetDatastreamsResponse;
-import org.n52.sos.coding.json.JSONConstants;
 import org.n52.sos.encode.json.JSONEncoder;
 import org.n52.svalbard.encode.exception.EncodingException;
 
@@ -48,8 +46,6 @@ public class StaGetDatastreamResponseEncoder extends JSONEncoder<GetObservationR
 //    private final StaObservationEncoder observationEncoder;
 
     public StaGetDatastreamResponseEncoder() {
-        //super(GetDatastreamsResponse.class, StaConstants.STA_HTTP_GET_PARAMETERNAME_DATASTREAMS);
-        //super(GetDatastreamsResponse.class, Sos2Constants.EN_GET_OBSERVATION);
 
         super(GetObservationResponse.class,
                 new OperationResponseEncoderKey(SosConstants.SOS, Sos2Constants.SERVICEVERSION,
@@ -62,7 +58,6 @@ public class StaGetDatastreamResponseEncoder extends JSONEncoder<GetObservationR
         List<StaDatastream> datastreams = new ArrayList<>();
 
         // create datastreams from observations, group observations by their OmObservationConstellation
-
         Iterator<StaDatastream> dsIterator;
         Boolean found;
 
@@ -70,7 +65,7 @@ public class StaGetDatastreamResponseEncoder extends JSONEncoder<GetObservationR
 
             OmObservation o = oIterator.next();
 
-            if (datastreams.size() == 0) {
+            if (datastreams.isEmpty()) {
                 datastreams.add(new StaDatastream(o));
 
             } else {
@@ -94,28 +89,26 @@ public class StaGetDatastreamResponseEncoder extends JSONEncoder<GetObservationR
                 }
             }
         }
-        
+
+        // add basic information
+        jsonNode.put(StaConstants.STA_ANNOTATION_COUNT, datastreams.size());
+        ArrayNode dsArray = jsonNode.putArray(StaConstants.STA_VALUES);
+
+        // encode datastreams
         for (Iterator<StaDatastream> dsIterator2 = datastreams.iterator(); dsIterator2.hasNext();) {
-            
+
             StaDatastream ds = dsIterator2.next();
-
-//            jsonNode.put(StaConstants.STA_HTTP_GET_PARAMETERNAME_DATASTREAMS, ds);
+            dsArray.add(encodeObjectToJson(ds));
         }
-
-        // encode observatios for every Datastream
-//        ObjectMapper mapper = new ObjectMapper();
-//        String jsonString = mapper.writeValueAsString(obj);
-
-        
     }
 
     @Override
     public JsonNode encodeJSON(GetObservationResponse t) throws EncodingException {
 
         ObjectNode n = Json.nodeFactory().objectNode();
-        n.put(JSONConstants.REQUEST, t.getOperationName());
-        n.put(JSONConstants.VERSION, t.getVersion());
-        n.put(JSONConstants.SERVICE, t.getService());
+//        n.put(JSONConstants.REQUEST, t.getOperationName());
+//        n.put(JSONConstants.VERSION, t.getVersion());
+//        n.put(JSONConstants.SERVICE, t.getService());
         encodeResponse(n, t);
         return n;
     }
