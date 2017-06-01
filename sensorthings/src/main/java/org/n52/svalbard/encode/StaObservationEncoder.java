@@ -18,6 +18,7 @@ package org.n52.svalbard.encode;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.n52.shetland.ogc.sta.StaConstants;
 import org.n52.shetland.ogc.sta.StaObservation;
 import org.n52.sos.encode.json.JSONEncoder;
 import org.n52.svalbard.encode.exception.EncodingException;
@@ -39,10 +40,11 @@ public class StaObservationEncoder extends JSONEncoder<StaObservation> {
     }
 
     @Override
-    public JsonNode encodeJSON(StaObservation t) throws EncodingException {
+    public JsonNode encodeJSON(StaObservation observation) throws EncodingException {
 
-       ObjectNode json = nodeFactory().objectNode();
+        ObjectNode json = nodeFactory().objectNode();
 
+        json.put(StaConstants.STA_ANNOTATION_ID, observation.getId());
         return json;
     }
 

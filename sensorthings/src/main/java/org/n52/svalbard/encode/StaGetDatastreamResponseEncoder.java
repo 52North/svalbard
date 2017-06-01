@@ -30,11 +30,13 @@ import org.n52.shetland.ogc.sos.Sos2Constants;
 import org.n52.shetland.ogc.sos.SosConstants;
 import org.n52.shetland.ogc.sos.response.GetObservationResponse;
 import org.n52.shetland.ogc.sta.StaConstants;
+import org.n52.shetland.ogc.sta.StaObservation;
 import org.n52.sos.encode.json.JSONEncoder;
 import org.n52.svalbard.encode.exception.EncodingException;
 
 /**
- * Request encoder for the SensorThings API Datastreams resource
+ * Request encoder for the SensorThings API Datastreams resource;
+ * transforms SOS Observations into SensorThings Datastreams and Observations.
  *
  * @author <a href="mailto:m.kiesow@52north.org">Martin Kiesow</a>
  */
@@ -52,7 +54,7 @@ public class StaGetDatastreamResponseEncoder extends JSONEncoder<GetObservationR
                         Sos2Constants.EN_GET_OBSERVATION, MediaTypes.APPLICATION_STA));
     }
 
-    protected void encodeResponse(ObjectNode jsonNode, GetObservationResponse t) throws EncodingException {
+    protected void encodeResponse(ObjectNode json, GetObservationResponse t) throws EncodingException {
 
         List<OmObservation> observationCollection = t.getObservationCollection();
         List<StaDatastream> datastreams = new ArrayList<>();
@@ -66,7 +68,7 @@ public class StaGetDatastreamResponseEncoder extends JSONEncoder<GetObservationR
             OmObservation o = oIterator.next();
 
             if (datastreams.isEmpty()) {
-                datastreams.add(new StaDatastream(o));
+                datastreams.add(new StaDatastream(o.getObservationConstellation(), transformObservation(o)));
 
             } else {
 
@@ -78,21 +80,21 @@ public class StaGetDatastreamResponseEncoder extends JSONEncoder<GetObservationR
                     StaDatastream ds = dsIterator.next();
 
                     if (o.getObservationConstellation().equals(ds.getObservationConstellation())) {
-                        ds.addObservation(o);
+                        ds.addObservation(transformObservation(o));
                         found = true;
                     }
                 }
 
                 // if no match was found, create new Datastream from this observation
                 if (!found) {
-                    datastreams.add(new StaDatastream(o));
+                    datastreams.add(new StaDatastream(o.getObservationConstellation(), transformObservation(o)));
                 }
             }
         }
 
         // add basic information
-        jsonNode.put(StaConstants.STA_ANNOTATION_COUNT, datastreams.size());
-        ArrayNode dsArray = jsonNode.putArray(StaConstants.STA_VALUES);
+        json.put(StaConstants.STA_ANNOTATION_COUNT, datastreams.size());
+        ArrayNode dsArray = json.putArray(StaConstants.STA_VALUES);
 
         // encode datastreams
         for (Iterator<StaDatastream> dsIterator2 = datastreams.iterator(); dsIterator2.hasNext();) {
@@ -106,10 +108,22 @@ public class StaGetDatastreamResponseEncoder extends JSONEncoder<GetObservationR
     public JsonNode encodeJSON(GetObservationResponse t) throws EncodingException {
 
         ObjectNode n = Json.nodeFactory().objectNode();
-//        n.put(JSONConstants.REQUEST, t.getOperationName());
-//        n.put(JSONConstants.VERSION, t.getVersion());
-//        n.put(JSONConstants.SERVICE, t.getService());
         encodeResponse(n, t);
+
         return n;
+    }
+
+    /**
+     * transform a SOS Observation into a STA Observation
+     * @param o SOS Observation
+     * @return SensorThings Observation
+     */
+    private StaObservation transformObservation(OmObservation o) {
+
+        StaObservation staObservation = new StaObservation(o.getObservationID());
+
+        staObservation.setDatastream(Integer.toString(o.getObservationConstellation().hashCode()));
+
+        return staObservation;
     }
 }
