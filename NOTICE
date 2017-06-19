@@ -24,6 +24,7 @@ This project includes:
   52°North Iceland under The Apache Software License, Version 2.0
   52°North Jan Mayen under The Apache Software License, Version 2.0
   52°North Shetland under The Apache Software License, Version 2.0
+  52°North SOS - JSON Coding under GPLv2
   52°North SOS - JSON Common under GNU General Public License, version 2
   52°North Svalbard Core under The Apache Software License, Version 2.0
   52°North Svalbard Parent under The Apache Software License, Version 2.0
@@ -35,6 +36,7 @@ This project includes:
   Apache Commons Logging under The Apache Software License, Version 2.0
   Apache HttpClient under Apache License, Version 2.0
   Apache HttpCore under Apache License, Version 2.0
+  Commons IO under The Apache Software License, Version 2.0
   Commons Lang under The Apache Software License, Version 2.0
   FindBugs-jsr305 under The Apache Software License, Version 2.0
   FindBugs-Native-Annotations under GNU Lesser Public License
