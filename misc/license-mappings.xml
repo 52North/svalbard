@@ -40,4 +40,11 @@
         <version>5.0.0-SNAPSHOT</version>
         <license>GNU General Public License, version 2</license>
     </artifact>
+    
+    <artifact>
+        <groupId>org.n52.sensorweb.sos</groupId>
+        <artifactId>coding-json</artifactId>
+        <version>5.0.0-SNAPSHOT</version>
+        <license>GNU General Public License, version 2</license>
+    </artifact>
 </license-lookup>

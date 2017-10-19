@@ -23,7 +23,6 @@ import java.util.Map;
 import org.n52.shetland.ogc.sta.StaConstants;
 import org.n52.shetland.ogc.sta.StaObservation;
 import org.n52.sos.encode.json.JSONEncoder;
-import org.n52.sos.encode.json.base.TimeJSONEncoder;
 import org.n52.svalbard.encode.exception.EncodingException;
 
 import org.slf4j.Logger;
@@ -46,7 +45,8 @@ public class StaObservationEncoder extends JSONEncoder<StaObservation> {
     public JsonNode encodeJSON(StaObservation observation) throws EncodingException {
 
         ObjectNode json = nodeFactory().objectNode();
-        TimeJSONEncoder timeEncoder = new TimeJSONEncoder();
+        // TODO replace fix encoder (from SOS) with encodeObjectToJson(observation.getPhenomenonTime())
+        //TimeJSONEncoder timeEncoder = new TimeJSONEncoder();
 
         json.put(StaConstants.ANNOTATION_ID, observation.getId())
             .put(StaConstants.ANNOTATION_SELF_LINK, observation.getSelfLink());
@@ -67,9 +67,9 @@ public class StaObservationEncoder extends JSONEncoder<StaObservation> {
         }
 
         // parameters, mandatory
-        json.set(StaConstants.Parameter.phenomenonTime.name(), timeEncoder.encode(observation.getPhenomenonTime()));
+        json.set(StaConstants.Parameter.phenomenonTime.name(), encodeObjectToJson(observation.getPhenomenonTime()));
         json.put(StaConstants.Parameter.result.name(), observation.getResult());
-        json.set(StaConstants.Parameter.resultTime.name(), timeEncoder.encode(observation.getResultTime()));
+        json.set(StaConstants.Parameter.resultTime.name(), encodeObjectToJson(observation.getResultTime()));
 
         // parameters, optional
         // resultQuality
@@ -78,7 +78,7 @@ public class StaObservationEncoder extends JSONEncoder<StaObservation> {
             observation.getResultQuality().forEach((String s) -> rqArray.add(s));
         }
         if (observation.isSetValidTime()) {
-            json.set(StaConstants.Parameter.validTime.name(), timeEncoder.encode(observation.getValidTime()));
+            json.set(StaConstants.Parameter.validTime.name(), encodeObjectToJson(observation.getValidTime()));
         }
         if (observation.isSetParameters()) {
             json.set(StaConstants.Parameter.parameters.name(), encodeParameters(observation.getParameters()));

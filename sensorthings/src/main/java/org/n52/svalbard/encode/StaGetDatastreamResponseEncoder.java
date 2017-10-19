@@ -78,7 +78,7 @@ public class StaGetDatastreamResponseEncoder extends JSONEncoder<GetObservationR
         for (OmObservation o : observationCollection) {
             if (datastreams.isEmpty()) {
 
-                String id = createDatastreamId(o.getObservationConstellation());
+                String id = encodeDatastreamId(o.getObservationConstellation());
                 String ot = getObservationType(o);
 
                 if (ot.equals(StaConstants.OBSERVATION_TYPE_TRUTH_OBSERVATION)) {
@@ -105,7 +105,7 @@ public class StaGetDatastreamResponseEncoder extends JSONEncoder<GetObservationR
 
                 // if no match was found, create new Datastream from this observation
                 if (!found) {
-                    String id = createDatastreamId(o.getObservationConstellation());
+                    String id = encodeDatastreamId(o.getObservationConstellation());
                     String ot = getObservationType(o);
 
                     if (ot.equals(StaConstants.OBSERVATION_TYPE_TRUTH_OBSERVATION)) {
@@ -142,7 +142,7 @@ public class StaGetDatastreamResponseEncoder extends JSONEncoder<GetObservationR
      * @param oc observation constellation
      * @return an id
      */
-    private String createDatastreamId(OmObservationConstellation oc) {
+    private String encodeDatastreamId(OmObservationConstellation oc) {
 
         String[] pr = oc.getProcedureIdentifier().split("/");
         String[] op = oc.getObservablePropertyIdentifier().split("/");
