@@ -16,6 +16,7 @@
  */
 package org.n52.svalbard.decode;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -24,9 +25,60 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import org.apache.xmlbeans.XmlObject;
+import org.joda.time.DateTime;
+import org.n52.shetland.ogc.sensorML.elements.SmlPosition;
+import org.n52.shetland.ogc.swe.RangeValue;
+import org.n52.shetland.ogc.swe.SweAbstractDataComponent;
+import org.n52.shetland.ogc.swe.SweConstants;
+import org.n52.shetland.ogc.swe.SweCoordinate;
+import org.n52.shetland.ogc.swe.SweDataArray;
+import org.n52.shetland.ogc.swe.SweDataRecord;
+import org.n52.shetland.ogc.swe.SweEnvelope;
+import org.n52.shetland.ogc.swe.SweField;
+import org.n52.shetland.ogc.swe.SweSimpleDataRecord;
+import org.n52.shetland.ogc.swe.SweVector;
+import org.n52.shetland.ogc.swe.encoding.SweAbstractEncoding;
+import org.n52.shetland.ogc.swe.encoding.SweTextEncoding;
+import org.n52.shetland.ogc.swe.simpleType.SweAbstractSimpleType;
+import org.n52.shetland.ogc.swe.simpleType.SweAllowedTimes;
+import org.n52.shetland.ogc.swe.simpleType.SweAllowedTokens;
+import org.n52.shetland.ogc.swe.simpleType.SweAllowedValues;
+import org.n52.shetland.ogc.swe.simpleType.SweBoolean;
+import org.n52.shetland.ogc.swe.simpleType.SweCategory;
+import org.n52.shetland.ogc.swe.simpleType.SweCount;
+import org.n52.shetland.ogc.swe.simpleType.SweCountRange;
+import org.n52.shetland.ogc.swe.simpleType.SweObservableProperty;
+import org.n52.shetland.ogc.swe.simpleType.SweQuality;
+import org.n52.shetland.ogc.swe.simpleType.SweQuantity;
+import org.n52.shetland.ogc.swe.simpleType.SweQuantityRange;
+import org.n52.shetland.ogc.swe.simpleType.SweText;
+import org.n52.shetland.ogc.swe.simpleType.SweTime;
+import org.n52.shetland.ogc.swe.simpleType.SweTimeRange;
+import org.n52.shetland.util.CollectionHelper;
+import org.n52.shetland.util.DateTimeHelper;
+import org.n52.shetland.util.DateTimeParseException;
+import org.n52.shetland.w3c.xlink.Reference;
+import org.n52.shetland.w3c.xlink.Referenceable;
+import org.n52.svalbard.decode.exception.DecodingException;
+import org.n52.svalbard.decode.exception.NotYetSupportedDecodingException;
+import org.n52.svalbard.decode.exception.UnsupportedDecoderInputException;
+import org.n52.svalbard.decode.exception.UnsupportedDecoderXmlInputException;
+import org.n52.svalbard.util.CodingHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.base.Joiner;
+
 import net.opengis.swe.x101.AbstractDataArrayType.ElementCount;
 import net.opengis.swe.x101.AbstractDataComponentType;
 import net.opengis.swe.x101.AbstractDataRecordDocument;
+import net.opengis.swe.x101.AllowedTimesDocument.AllowedTimes;
+import net.opengis.swe.x101.AllowedTimesPropertyType;
+import net.opengis.swe.x101.AllowedTokensDocument.AllowedTokens;
+import net.opengis.swe.x101.AllowedTokensPropertyType;
+import net.opengis.swe.x101.AllowedValuesDocument.AllowedValues;
+import net.opengis.swe.x101.AllowedValuesPropertyType;
 import net.opengis.swe.x101.AnyScalarPropertyType;
 import net.opengis.swe.x101.BlockEncodingPropertyType;
 import net.opengis.swe.x101.BooleanDocument;
@@ -62,88 +114,37 @@ import net.opengis.swe.x101.VectorPropertyType;
 import net.opengis.swe.x101.VectorType;
 import net.opengis.swe.x101.VectorType.Coordinate;
 
-import org.apache.xmlbeans.XmlObject;
-import org.joda.time.DateTime;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import org.n52.shetland.ogc.sensorML.elements.SmlPosition;
-import org.n52.shetland.ogc.swe.RangeValue;
-import org.n52.shetland.ogc.swe.SweAbstractDataComponent;
-import org.n52.shetland.ogc.swe.SweConstants;
-import org.n52.shetland.ogc.swe.SweCoordinate;
-import org.n52.shetland.ogc.swe.SweDataArray;
-import org.n52.shetland.ogc.swe.SweDataRecord;
-import org.n52.shetland.ogc.swe.SweEnvelope;
-import org.n52.shetland.ogc.swe.SweField;
-import org.n52.shetland.ogc.swe.SweSimpleDataRecord;
-import org.n52.shetland.ogc.swe.SweVector;
-import org.n52.shetland.ogc.swe.encoding.SweAbstractEncoding;
-import org.n52.shetland.ogc.swe.encoding.SweTextEncoding;
-import org.n52.shetland.ogc.swe.simpleType.SweAbstractSimpleType;
-import org.n52.shetland.ogc.swe.simpleType.SweBoolean;
-import org.n52.shetland.ogc.swe.simpleType.SweCategory;
-import org.n52.shetland.ogc.swe.simpleType.SweCount;
-import org.n52.shetland.ogc.swe.simpleType.SweCountRange;
-import org.n52.shetland.ogc.swe.simpleType.SweObservableProperty;
-import org.n52.shetland.ogc.swe.simpleType.SweQuality;
-import org.n52.shetland.ogc.swe.simpleType.SweQuantity;
-import org.n52.shetland.ogc.swe.simpleType.SweQuantityRange;
-import org.n52.shetland.ogc.swe.simpleType.SweText;
-import org.n52.shetland.ogc.swe.simpleType.SweTime;
-import org.n52.shetland.ogc.swe.simpleType.SweTimeRange;
-import org.n52.shetland.util.DateTimeHelper;
-import org.n52.svalbard.decode.exception.DecodingException;
-import org.n52.svalbard.decode.exception.NotYetSupportedDecodingException;
-import org.n52.svalbard.decode.exception.UnsupportedDecoderInputException;
-import org.n52.svalbard.decode.exception.UnsupportedDecoderXmlInputException;
-import org.n52.svalbard.util.CodingHelper;
-
-import com.google.common.base.Joiner;
-
 /**
- * @since 4.0.0
+ * @since 1.0.0
  *
  */
-public class SweCommonDecoderV101 extends AbstractXmlDecoder<Object, Object> {
+public class SweCommonDecoderV101
+        extends AbstractXmlDecoder<Object, Object> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SweCommonDecoderV101.class);
 
-    private static final Set<DecoderKey> DECODER_KEYS = CodingHelper.decoderKeysForElements(
-            SweConstants.NS_SWE_101,
-            net.opengis.swe.x101.DataArrayDocument.class,
-            net.opengis.swe.x101.DataArrayType.class,
-            net.opengis.swe.x101.AbstractDataComponentType.class,
-            net.opengis.swe.x101.BooleanDocument.class,
-            net.opengis.swe.x101.BooleanDocument.Boolean.class,
-            net.opengis.swe.x101.CategoryDocument.Category.class,
-            net.opengis.swe.x101.CategoryDocument.class,
-            net.opengis.swe.x101.CountDocument.Count.class,
-            net.opengis.swe.x101.CountDocument.class,
-            net.opengis.swe.x101.CountRangeDocument.CountRange.class,
+    private static final Set<DecoderKey> DECODER_KEYS = CodingHelper.decoderKeysForElements(SweConstants.NS_SWE_101,
+            net.opengis.swe.x101.DataArrayDocument.class, net.opengis.swe.x101.DataArrayType.class,
+            net.opengis.swe.x101.AbstractDataComponentType.class, net.opengis.swe.x101.BooleanDocument.class,
+            net.opengis.swe.x101.BooleanDocument.Boolean.class, net.opengis.swe.x101.CategoryDocument.Category.class,
+            net.opengis.swe.x101.CategoryDocument.class, net.opengis.swe.x101.CountDocument.Count.class,
+            net.opengis.swe.x101.CountDocument.class, net.opengis.swe.x101.CountRangeDocument.CountRange.class,
             net.opengis.swe.x101.CountRangeDocument.class,
             net.opengis.swe.x101.ObservablePropertyDocument.ObservableProperty.class,
             net.opengis.swe.x101.ObservablePropertyDocument.class,
-            net.opengis.swe.x101.QuantityDocument.Quantity.class,
-            net.opengis.swe.x101.QuantityDocument.class,
+            net.opengis.swe.x101.QuantityDocument.Quantity.class, net.opengis.swe.x101.QuantityDocument.class,
             net.opengis.swe.x101.QuantityRangeDocument.QuantityRange.class,
-            net.opengis.swe.x101.QuantityRangeDocument.class,
-            net.opengis.swe.x101.TextDocument.Text.class,
-            net.opengis.swe.x101.TextDocument.class,
-            net.opengis.swe.x101.TimeDocument.Time.class,
-            net.opengis.swe.x101.TimeDocument.class,
-            net.opengis.swe.x101.TimeRangeDocument.TimeRange.class,
-            net.opengis.swe.x101.TimeRangeDocument.class,
-            net.opengis.swe.x101.DataComponentPropertyType[].class,
-            net.opengis.swe.x101.PositionType.class,
-            net.opengis.swe.x101.VectorType.Coordinate[].class,
-            net.opengis.swe.x101.AnyScalarPropertyType[].class,
-            net.opengis.swe.x101.AbstractDataRecordDocument.class,
+            net.opengis.swe.x101.QuantityRangeDocument.class, net.opengis.swe.x101.TextDocument.Text.class,
+            net.opengis.swe.x101.TextDocument.class, net.opengis.swe.x101.TimeDocument.Time.class,
+            net.opengis.swe.x101.TimeDocument.class, net.opengis.swe.x101.TimeRangeDocument.TimeRange.class,
+            net.opengis.swe.x101.TimeRangeDocument.class, net.opengis.swe.x101.DataComponentPropertyType[].class,
+            net.opengis.swe.x101.PositionType.class, net.opengis.swe.x101.VectorType.Coordinate[].class,
+            net.opengis.swe.x101.AnyScalarPropertyType[].class, net.opengis.swe.x101.AbstractDataRecordDocument.class,
             net.opengis.swe.x101.AbstractDataRecordType.class);
 
     public SweCommonDecoderV101() {
         LOGGER.debug("Decoder for the following keys initialized successfully: {}!",
-                     Joiner.on(", ").join(DECODER_KEYS));
+                Joiner.on(", ").join(DECODER_KEYS));
     }
 
     @Override
@@ -308,9 +309,8 @@ public class SweCommonDecoderV101 extends AbstractXmlDecoder<Object, Object> {
 
     private SweDataArray parseSweDataArrayType(DataArrayType xbDataArray) throws DecodingException {
         if (!xbDataArray.getElementType().isSetAbstractDataRecord()) {
-            throw new DecodingException(
-                    "The swe:DataArray contains a not yet supported elementType element. " +
-                     "Currently only 'swe:DataRecord' is supported as elementType element.");
+            throw new DecodingException("The swe:DataArray contains a not yet supported elementType element. "
+                    + "Currently only 'swe:DataRecord' is supported as elementType element.");
         }
         final SweDataArray dataArray = new SweDataArray();
         if (xbDataArray.getElementCount() != null) {
@@ -325,13 +325,13 @@ public class SweCommonDecoderV101 extends AbstractXmlDecoder<Object, Object> {
             dataArray.setEncoding(parseEncoding(xbDataArray.getEncoding()));
         }
 
-//        // parse values
-//        if (xbDataArray.isSetValues()) {
-//            // TODO implement full support
-//            // dataArray.setValues(parseValues(dataArray.getElementCount(),
-//            // dataArray.getElementType(),
-//            // dataArray.getEncoding(), xbDataArray.getValues()));
-//        }
+        // parse values
+        // if (xbDataArray.isSetValues()) {
+        // // TODO implement full support
+        // // dataArray.setValues(parseValues(dataArray.getElementCount(),
+        // // dataArray.getElementType(),
+        // // dataArray.getEncoding(), xbDataArray.getValues()));
+        // }
         DataArrayDocument xbDataArrayDoc = DataArrayDocument.Factory.newInstance(getXmlOptions());
         xbDataArrayDoc.setDataArray1(xbDataArray);
         dataArray.setXml(xbDataArrayDoc.xmlText());
@@ -393,15 +393,15 @@ public class SweCommonDecoderV101 extends AbstractXmlDecoder<Object, Object> {
     private SweCountRange parseCountRange(CountRange xbCountRange) throws DecodingException {
         SweCountRange sosCountRange = new SweCountRange();
 
-//        if (xbCountRange.isSetAxisID()) {
-//            // TODO axisID
-//        }
+        // if (xbCountRange.isSetAxisID()) {
+        // // TODO axisID
+        // }
         if (xbCountRange.getQualityArray() != null) {
             sosCountRange.setQuality(parseQuality(xbCountRange.getQualityArray()));
         }
-//        if (xbCountRange.isSetReferenceFrame()) {
-//            // TODO reference frame
-//        }
+        // if (xbCountRange.isSetReferenceFrame()) {
+        // // TODO reference frame
+        // }
         if (xbCountRange.isSetDefinition()) {
             sosCountRange.setDefinition(xbCountRange.getDefinition());
         }
@@ -473,7 +473,7 @@ public class SweCommonDecoderV101 extends AbstractXmlDecoder<Object, Object> {
 
     private DecodingException createParsingException(final Exception e) {
         return new DecodingException(e, "QuantityRange",
-                                     "Error when parsing 'swe:QuantityRange/swe:value': It must be of type 'double double!");
+                "Error when parsing 'swe:QuantityRange/swe:value': It must be of type 'double double!");
     }
 
     private SweText parseText(Text xbText) {
@@ -516,6 +516,177 @@ public class SweCommonDecoderV101 extends AbstractXmlDecoder<Object, Object> {
         return sosTimeRange;
     }
 
+    private Referenceable<SweAllowedValues> parseConstraint(AllowedValuesPropertyType avpt) {
+        if (avpt.isSetAllowedValues()) {
+            return Referenceable.of(parseAllowedValues(avpt.getAllowedValues()));
+        } else {
+            Reference ref = new Reference();
+            if (avpt.isSetHref()) {
+                ref.setHref(URI.create(avpt.getHref()));
+            }
+            if (avpt.isSetTitle()) {
+                ref.setTitle(avpt.getTitle());
+            }
+            if (avpt.isSetActuate()) {
+                ref.setActuate(avpt.getActuate().toString());
+            }
+            if (avpt.isSetArcrole()) {
+                ref.setArcrole(avpt.getArcrole());
+            }
+            if (avpt.isSetRole()) {
+                ref.setRole(avpt.getRole());
+            }
+            if (avpt.isSetShow()) {
+                ref.setShow(avpt.getShow().toString());
+            }
+            if (avpt.isSetType()) {
+                ref.setType(avpt.getType().toString());
+            }
+            return Referenceable.of(ref);
+        }
+
+    }
+
+    private Referenceable<SweAllowedTokens> parseConstraint(AllowedTokensPropertyType atpt) {
+        if (atpt.isSetAllowedTokens()) {
+            return Referenceable.of(parseAllowedTokens(atpt.getAllowedTokens()));
+        } else {
+            Reference ref = new Reference();
+            if (atpt.isSetHref()) {
+                ref.setHref(URI.create(atpt.getHref()));
+            }
+            if (atpt.isSetTitle()) {
+                ref.setTitle(atpt.getTitle());
+            }
+            if (atpt.isSetActuate()) {
+                ref.setActuate(atpt.getActuate().toString());
+            }
+            if (atpt.isSetArcrole()) {
+                ref.setArcrole(atpt.getArcrole());
+            }
+            if (atpt.isSetRole()) {
+                ref.setRole(atpt.getRole());
+            }
+            if (atpt.isSetShow()) {
+                ref.setShow(atpt.getShow().toString());
+            }
+            if (atpt.isSetType()) {
+                ref.setType(atpt.getType().toString());
+            }
+            return Referenceable.of(ref);
+        }
+    }
+
+    private Referenceable<SweAllowedTimes> parseConstraint(AllowedTimesPropertyType atpt)
+            throws DateTimeParseException {
+        if (atpt.isSetAllowedTimes()) {
+            return Referenceable.of(parseAllowedTimes(atpt.getAllowedTimes()));
+        } else {
+            Reference ref = new Reference();
+            if (atpt.isSetHref()) {
+                ref.setHref(URI.create(atpt.getHref()));
+            }
+            if (atpt.isSetTitle()) {
+                ref.setTitle(atpt.getTitle());
+            }
+            if (atpt.isSetActuate()) {
+                ref.setActuate(atpt.getActuate().toString());
+            }
+            if (atpt.isSetArcrole()) {
+                ref.setArcrole(atpt.getArcrole());
+            }
+            if (atpt.isSetRole()) {
+                ref.setRole(atpt.getRole());
+            }
+            if (atpt.isSetShow()) {
+                ref.setShow(atpt.getShow().toString());
+            }
+            if (atpt.isSetType()) {
+                ref.setType(atpt.getType().toString());
+            }
+            return Referenceable.of(ref);
+        }
+
+    }
+
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    private SweAllowedValues parseAllowedValues(AllowedValues avt) {
+        SweAllowedValues allowedValues = new SweAllowedValues();
+        if (avt.isSetId()) {
+            allowedValues.setGmlId(avt.getId());
+        }
+        if (CollectionHelper.isNotNullOrEmpty(avt.getValueListArray())) {
+            for (List list : avt.getValueListArray()) {
+                if (CollectionHelper.isNotEmpty(list)) {
+                    for (Object value : list) {
+                        allowedValues.addValue(Double.parseDouble(value.toString()));
+                    }
+                }
+            }
+        }
+        if (CollectionHelper.isNotNullOrEmpty(avt.getIntervalArray())) {
+            for (List interval : avt.getIntervalArray()) {
+                RangeValue<Double> rangeValue = new RangeValue<Double>();
+                Iterator<Double> iterator = interval.iterator();
+                if (iterator.hasNext()) {
+                    rangeValue.setRangeStart(iterator.next());
+                }
+                if (iterator.hasNext()) {
+                    rangeValue.setRangeEnd(iterator.next());
+                }
+                allowedValues.addInterval(rangeValue);
+            }
+        }
+        return allowedValues;
+    }
+
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    private SweAllowedTokens parseAllowedTokens(AllowedTokens att) {
+        SweAllowedTokens allowedTokens = new SweAllowedTokens();
+        if (att.isSetId()) {
+            allowedTokens.setGmlId(att.getId());
+        }
+        if (CollectionHelper.isNotNullOrEmpty(att.getValueListArray())) {
+            for (List list : att.getValueListArray()) {
+                if (CollectionHelper.isNotEmpty(list)) {
+                    allowedTokens.setValue(list);
+                }
+            }
+        }
+        return allowedTokens;
+    }
+
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    private SweAllowedTimes parseAllowedTimes(AllowedTimes att) throws DateTimeParseException {
+        SweAllowedTimes allowedTimes = new SweAllowedTimes();
+        if (att.isSetId()) {
+            allowedTimes.setGmlId(att.getId());
+        }
+        if (CollectionHelper.isNotNullOrEmpty(att.getValueListArray())) {
+            for (List list : att.getValueListArray()) {
+                if (CollectionHelper.isNotEmpty(list)) {
+                    for (Object value : list) {
+                        allowedTimes.addValue(DateTimeHelper.parseIsoString2DateTime(value.toString()));
+                    }
+                }
+            }
+        }
+        if (CollectionHelper.isNotNullOrEmpty(att.getIntervalArray())) {
+            for (List interval : att.getIntervalArray()) {
+                RangeValue<DateTime> rangeValue = new RangeValue<DateTime>();
+                Iterator iterator = interval.iterator();
+                if (iterator.hasNext()) {
+                    rangeValue.setRangeStart(DateTimeHelper.parseIsoString2DateTime(iterator.next().toString()));
+                }
+                if (iterator.hasNext()) {
+                    rangeValue.setRangeEnd(DateTimeHelper.parseIsoString2DateTime(iterator.next().toString()));
+                }
+                allowedTimes.addInterval(rangeValue);
+            }
+        }
+        return allowedTimes;
+    }
+
     private Collection<SweQuality> parseQuality(QualityPropertyType... qualityArray) throws DecodingException {
         if (qualityArray != null && qualityArray.length > 0) {
             ArrayList<SweQuality> sosQualities = new ArrayList<>(qualityArray.length);
@@ -550,7 +721,7 @@ public class SweCommonDecoderV101 extends AbstractXmlDecoder<Object, Object> {
                         .add(new SweCoordinate<>(xbCoordinate.getName(), parseQuantity(xbCoordinate.getQuantity())));
             } else {
                 throw new DecodingException("Position",
-                                            "Error when parsing the Coordinates of Position: It must be of type Quantity!");
+                        "Error when parsing the Coordinates of Position: It must be of type Quantity!");
             }
         }
         return sosCoordinates;
@@ -577,7 +748,7 @@ public class SweCommonDecoderV101 extends AbstractXmlDecoder<Object, Object> {
             return parseTextEncoding(abstractEncodingType.getTextBlock());
         }
         throw new NotYetSupportedDecodingException(SweConstants.EN_ENCODING_TYPE, abstractEncodingType,
-                                                   TextBlock.type.getName());
+                TextBlock.type.getName());
     }
 
     private SweTextEncoding parseTextEncoding(TextBlock textEncoding) {
@@ -588,8 +759,7 @@ public class SweCommonDecoderV101 extends AbstractXmlDecoder<Object, Object> {
         return sosTextEncoding;
     }
 
-    private SweAbstractDataComponent parseAnyScalarProperty(AnyScalarPropertyType xbField)
-            throws DecodingException {
+    private SweAbstractDataComponent parseAnyScalarProperty(AnyScalarPropertyType xbField) throws DecodingException {
         if (xbField.isSetBoolean()) {
             return parseAbstractDataComponentType(xbField.getBoolean());
         } else if (xbField.isSetCategory()) {

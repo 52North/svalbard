@@ -34,7 +34,7 @@ import org.n52.svalbard.decode.exception.XmlDecodingException;
  *
  * @author <a href="mailto:c.autermann@52north.org">Christian Autermann</a>
  *
- * @since 4.0.0
+ * @since 1.0.0
  */
 public abstract class AbstractXmlDecoder<T, S> extends AbstractDelegatingDecoder<S, T> {
 
@@ -49,7 +49,6 @@ public abstract class AbstractXmlDecoder<T, S> extends AbstractDelegatingDecoder
         this.xmlOptions = xmlOptions;
     }
 
-    @SuppressWarnings("unchecked")
     public <T> T decodeXmlElement(XmlObject x) throws DecodingException {
         return decodeXmlObject(x);
     }

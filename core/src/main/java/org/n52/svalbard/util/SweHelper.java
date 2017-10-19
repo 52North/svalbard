@@ -17,7 +17,9 @@
 package org.n52.svalbard.util;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,6 +46,7 @@ import org.n52.shetland.ogc.om.values.HrefAttributeValue;
 import org.n52.shetland.ogc.om.values.MultiPointCoverage;
 import org.n52.shetland.ogc.om.values.NilTemplateValue;
 import org.n52.shetland.ogc.om.values.ProfileValue;
+import org.n52.shetland.ogc.om.values.QuantityRangeValue;
 import org.n52.shetland.ogc.om.values.QuantityValue;
 import org.n52.shetland.ogc.om.values.RectifiedGridCoverage;
 import org.n52.shetland.ogc.om.values.ReferenceValue;
@@ -51,9 +54,12 @@ import org.n52.shetland.ogc.om.values.SweDataArrayValue;
 import org.n52.shetland.ogc.om.values.TLVTValue;
 import org.n52.shetland.ogc.om.values.TVPValue;
 import org.n52.shetland.ogc.om.values.TextValue;
+import org.n52.shetland.ogc.om.values.TimeRangeValue;
 import org.n52.shetland.ogc.om.values.UnknownValue;
 import org.n52.shetland.ogc.om.values.Value;
+import org.n52.shetland.ogc.om.values.XmlValue;
 import org.n52.shetland.ogc.om.values.visitor.ValueVisitor;
+import org.n52.shetland.ogc.swe.CoordinateSettingsProvider;
 import org.n52.shetland.ogc.swe.SweAbstractDataComponent;
 import org.n52.shetland.ogc.swe.SweDataArray;
 import org.n52.shetland.ogc.swe.SweDataRecord;
@@ -69,6 +75,7 @@ import org.n52.shetland.ogc.swe.simpleType.SweQuantity;
 import org.n52.shetland.ogc.swe.simpleType.SweText;
 import org.n52.shetland.ogc.swe.simpleType.SweTime;
 import org.n52.shetland.ogc.swe.simpleType.SweTimeRange;
+import org.n52.shetland.util.CollectionHelper;
 import org.n52.shetland.util.DateTimeHelper;
 import org.n52.shetland.util.JavaHelper;
 import org.n52.svalbard.CodingSettings;
@@ -81,7 +88,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 /**
  * SWE helper class.
  *
- * @since 4.0.0
+ * @since 1.0.0
  *
  */
 @Configurable
@@ -94,6 +101,12 @@ public final class SweHelper {
     private String tupleSeparator;
 
     private String decimalSeparator;
+
+    private Set<String> northingNames = Collections.emptySet();
+
+    private Set<String> eastingNames = Collections.emptySet();
+
+    private Set<String> altitudeNames = Collections.emptySet();
 
     @Setting(CodingSettings.TOKEN_SEPARATOR)
     public void setTokenSeparator(final String separator) throws ConfigurationError {
@@ -116,16 +129,18 @@ public final class SweHelper {
     /**
      * Create {@link SweDataArray} from {@link OmObservation}
      *
-     * @param sosObservation The {@link OmObservation} to create {@link SweDataArray} from
+     * @param sosObservation
+     *            The {@link OmObservation} to create {@link SweDataArray} from
      *
      * @return Created {@link SweDataArray}
      *
-     * @throws EncodingException If the service does not support the {@link SweDataArray} creation from value of
-     *                           {@link OmObservation}
+     * @throws EncodingException
+     *             If the service does not support the {@link SweDataArray}
+     *             creation from value of {@link OmObservation}
      */
     public SweDataArray createSosSweDataArray(OmObservation sosObservation) throws EncodingException {
-        String observablePropertyIdentifier = sosObservation.getObservationConstellation().getObservableProperty()
-                .getIdentifier();
+        String observablePropertyIdentifier =
+                sosObservation.getObservationConstellation().getObservableProperty().getIdentifier();
         SweDataArrayValue dataArrayValue = new SweDataArrayValue();
         SweDataArray dataArray = new SweDataArray();
         dataArray.setEncoding(createTextEncoding(sosObservation));
@@ -137,7 +152,7 @@ public final class SweHelper {
             } else {
                 dataArray.setElementType(createElementType(singleValue, observablePropertyIdentifier));
                 dataArrayValue.addBlock(createBlock(dataArray.getElementType(), sosObservation.getPhenomenonTime(),
-                                                    observablePropertyIdentifier, singleValue.getValue()));
+                        observablePropertyIdentifier, singleValue.getValue()));
             }
         } else if (sosObservation.getValue() instanceof MultiObservationValues) {
             MultiObservationValues<?> multiValue = (MultiObservationValues<?>) sosObservation.getValue();
@@ -146,12 +161,15 @@ public final class SweHelper {
             } else if (multiValue.getValue() instanceof TVPValue) {
                 TVPValue tvpValues = (TVPValue) multiValue.getValue();
                 for (TimeValuePair timeValuePair : tvpValues.getValue()) {
-                    if (!dataArray.isSetElementTyp()) {
-                        dataArray.setElementType(createElementType(timeValuePair, observablePropertyIdentifier));
+                    if (timeValuePair != null && timeValuePair.getValue() != null
+                            && timeValuePair.getValue().isSetValue()) {
+                        if (!dataArray.isSetElementTyp()) {
+                            dataArray.setElementType(createElementType(timeValuePair, observablePropertyIdentifier));
+                        }
+                        List<String> newBlock = createBlock(dataArray.getElementType(), timeValuePair.getTime(),
+                                observablePropertyIdentifier, timeValuePair.getValue());
+                        dataArrayValue.addBlock(newBlock);
                     }
-                    List<String> newBlock = createBlock(dataArray.getElementType(), timeValuePair.getTime(),
-                                                        observablePropertyIdentifier, timeValuePair.getValue());
-                    dataArrayValue.addBlock(newBlock);
                 }
             }
         }
@@ -161,12 +179,15 @@ public final class SweHelper {
     /**
      * Create {@link SweDataArray} from {@link AbstractObservationValue}
      *
-     * @param observationValue The {@link AbstractObservationValue} to create {@link SweDataArray} from
+     * @param observationValue
+     *            The {@link AbstractObservationValue} to create
+     *            {@link SweDataArray} from
      *
      * @return Created {@link SweDataArray}
      *
-     * @throws EncodingException If the service does not support the {@link SweDataArray} creation from
-     *                           {@link AbstractObservationValue}
+     * @throws EncodingException
+     *             If the service does not support the {@link SweDataArray}
+     *             creation from {@link AbstractObservationValue}
      */
     public SweDataArray createSosSweDataArray(AbstractObservationValue<?> observationValue) throws EncodingException {
         String observablePropertyIdentifier = observationValue.getObservableProperty();
@@ -181,7 +202,7 @@ public final class SweHelper {
             } else {
                 dataArray.setElementType(createElementType(singleValue, observablePropertyIdentifier));
                 dataArrayValue.addBlock(createBlock(dataArray.getElementType(), observationValue.getPhenomenonTime(),
-                                                    observablePropertyIdentifier, singleValue.getValue()));
+                        observablePropertyIdentifier, singleValue.getValue()));
             }
         } else if (observationValue instanceof MultiObservationValues) {
             MultiObservationValues<?> multiValue = (MultiObservationValues<?>) observationValue;
@@ -190,12 +211,15 @@ public final class SweHelper {
             } else if (multiValue.getValue() instanceof TVPValue) {
                 TVPValue tvpValues = (TVPValue) multiValue.getValue();
                 for (TimeValuePair timeValuePair : tvpValues.getValue()) {
-                    if (!dataArray.isSetElementTyp()) {
-                        dataArray.setElementType(createElementType(timeValuePair, observablePropertyIdentifier));
+                    if (timeValuePair != null && timeValuePair.getValue() != null
+                            && timeValuePair.getValue().isSetValue()) {
+                        if (!dataArray.isSetElementTyp()) {
+                            dataArray.setElementType(createElementType(timeValuePair, observablePropertyIdentifier));
+                        }
+                        List<String> newBlock = createBlock(dataArray.getElementType(), timeValuePair.getTime(),
+                                observablePropertyIdentifier, timeValuePair.getValue());
+                        dataArrayValue.addBlock(newBlock);
                     }
-                    List<String> newBlock = createBlock(dataArray.getElementType(), timeValuePair.getTime(),
-                                                        observablePropertyIdentifier, timeValuePair.getValue());
-                    dataArrayValue.addBlock(newBlock);
                 }
             }
         }
@@ -263,6 +287,11 @@ public final class SweHelper {
             }
 
             @Override
+            public SweAbstractDataComponent visit(QuantityRangeValue value) throws EncodingException {
+                throw notSupported();
+            }
+
+            @Override
             public SweAbstractDataComponent visit(TextValue value) {
                 return new SweText();
             }
@@ -275,7 +304,7 @@ public final class SweHelper {
             @Override
             public SweAbstractDataComponent visit(ComplexValue value) throws EncodingException {
                 throw new EncodingException("The merging of '%s' is not yet supported!",
-                                            OmConstants.OBS_TYPE_COMPLEX_OBSERVATION);
+                        OmConstants.OBS_TYPE_COMPLEX_OBSERVATION);
             }
 
             @Override
@@ -333,18 +362,32 @@ public final class SweHelper {
                 throw notSupported();
             }
 
+            @Override
+            public SweAbstractDataComponent visit(TimeRangeValue value) throws EncodingException {
+                SweTimeRange sweTimeRange = new SweTimeRange();
+                sweTimeRange.setUom(value.getUnit());
+                return sweTimeRange;
+            }
+
+            @Override
+            public SweAbstractDataComponent visit(XmlValue<?> value) throws EncodingException {
+                throw notSupported();
+            }
+
             private EncodingException notSupported() {
                 return new EncodingException("The merging of value type '%s' is not yet supported!",
-                                             iValue.getClass().getName());
+                        iValue.getClass().getName());
             }
         });
     }
 
     /**
-     * Create a TextEncoding object for token and tuple separators from SosObservation. If separators not set,
-     * definitions from Configurator are used.
+     * Create a TextEncoding object for token and tuple separators from
+     * SosObservation. If separators not set, definitions from Configurator are
+     * used.
      *
-     * @param o SosObservation with token and tuple separator
+     * @param o
+     *            SosObservation with token and tuple separator
      *
      * @return TextEncoding
      */
@@ -356,10 +399,12 @@ public final class SweHelper {
     }
 
     /**
-     * Create a TextEncoding object for token and tuple separators from SosObservation. If separators not set,
-     * definitions from Configurator are used.
+     * Create a TextEncoding object for token and tuple separators from
+     * SosObservation. If separators not set, definitions from Configurator are
+     * used.
      *
-     * @param v AbstractObservationValue with token and tuple separator
+     * @param v
+     *            AbstractObservationValue with token and tuple separator
      *
      * @return TextEncoding
      */
@@ -373,9 +418,12 @@ public final class SweHelper {
     /**
      * Create a TextEncoding object for token and tuple separators.
      *
-     * @param tuple   Token separator
-     * @param token   Tuple separator
-     * @param decimal Decimal separator
+     * @param tuple
+     *            Token separator
+     * @param token
+     *            Tuple separator
+     * @param decimal
+     *            Decimal separator
      *
      * @return TextEncoding
      */
@@ -391,7 +439,7 @@ public final class SweHelper {
 
     @SuppressFBWarnings("BC_VACUOUS_INSTANCEOF")
     private List<String> createBlock(SweAbstractDataComponent elementType, Time phenomenonTime, String phenID,
-                                     Value<?> value) {
+            Value<?> value) {
         if (elementType instanceof SweDataRecord) {
             SweDataRecord elementTypeRecord = (SweDataRecord) elementType;
             List<String> block = new ArrayList<>(elementTypeRecord.getFields().size());
@@ -399,8 +447,8 @@ public final class SweHelper {
                 elementTypeRecord.getFields().forEach(field -> {
                     if (field.getElement() instanceof SweTime || field.getElement() instanceof SweTimeRange) {
                         block.add(DateTimeHelper.format(phenomenonTime));
-                    } else if (field.getElement() instanceof SweAbstractDataComponent &&
-                               field.getElement().getDefinition().equals(phenID)) {
+                    } else if (field.getElement() instanceof SweAbstractDataComponent
+                            && field.getElement().getDefinition().equals(phenID)) {
                         block.add(value.getValue().toString());
                     } else if (field.getElement() instanceof SweObservableProperty) {
                         block.add(phenID);
@@ -410,7 +458,7 @@ public final class SweHelper {
             return block;
         }
         String exceptionMsg = String.format("Type of ElementType is not supported: %s",
-                                            elementType != null ? elementType.getClass().getName() : "null");
+                elementType != null ? elementType.getClass().getName() : "null");
         LOGGER.debug(exceptionMsg);
         throw new IllegalArgumentException(exceptionMsg);
     }
@@ -418,9 +466,12 @@ public final class SweHelper {
     /**
      * Create a {@link SweQuantity} from parameter
      *
-     * @param value the {@link SweQuantity} value
-     * @param axis  the {@link SweQuantity} axis id
-     * @param uom   the {@link SweQuantity} unit of measure
+     * @param value
+     *            the {@link SweQuantity} value
+     * @param axis
+     *            the {@link SweQuantity} axis id
+     * @param uom
+     *            the {@link SweQuantity} unit of measure
      *
      * @return the {@link SweQuantity} from parameter
      */
@@ -428,4 +479,101 @@ public final class SweHelper {
         return new SweQuantity().setAxisID(axis).setUom(uom).setValue(JavaHelper.asDouble(value));
     }
 
+    /**
+     * @return the northingNames
+     */
+    public Set<String> getNorthingNames() {
+        return northingNames;
+    }
+
+    /**
+     * @param northingNames
+     *            the northingNames to set
+     */
+    @Setting(CoordinateSettingsProvider.NORTHING_COORDINATE_NAME)
+    public void setNorthingNames(String northingNames) {
+        if (!Strings.isNullOrEmpty(northingNames)) {
+            this.northingNames = CollectionHelper.csvStringToSet(northingNames);
+        }
+    }
+
+    /**
+     * Check if northing names contains name
+     *
+     * @param names
+     *            Names to check
+     * @return <code>true</code>, if the name is defined.
+     */
+    public boolean hasNorthingName(String... names) {
+        return check(getNorthingNames(), names);
+    }
+
+    /**
+     * @return the eastingNames
+     */
+    public Set<String> getEastingNames() {
+        return eastingNames;
+    }
+
+    /**
+     * @param eastingNames
+     *            the eastingNames to set
+     */
+    @Setting(CoordinateSettingsProvider.EASTING_COORDINATE_NAME)
+    public void setEastingNames(String eastingNames) {
+        if (!Strings.isNullOrEmpty(eastingNames)) {
+            this.eastingNames = CollectionHelper.csvStringToSet(eastingNames);
+        }
+    }
+
+    /**
+     * Check if easting names contains name
+     *
+     * @param names
+     *            Names to check
+     * @return <code>true</code>, if the name is defined.
+     */
+    public boolean hasEastingName(String... names) {
+        return check(getEastingNames(), names);
+    }
+
+    /**
+     * @return the altitudeNames
+     */
+    public Set<String> getAltitudeNames() {
+        return altitudeNames;
+    }
+
+    /**
+     * @param altitudeNames
+     *            the altitudeNames to set
+     */
+    @Setting(CoordinateSettingsProvider.ALTITUDE_COORDINATE_NAME)
+    public void setAltitudeNames(String altitudeNames) {
+        if (!Strings.isNullOrEmpty(altitudeNames)) {
+            this.altitudeNames = CollectionHelper.csvStringToSet(altitudeNames);
+        }
+    }
+
+    /**
+     * Check if altitude names contains name
+     *
+     * @param names
+     *            Names to check
+     * @return <code>true</code>, if the name is defined.
+     */
+    public boolean hasAltitudeName(String... names) {
+        return check(getAltitudeNames(), names);
+    }
+
+    private boolean check(Set<String> set, String... names) {
+        for (String string : set) {
+            for (String name : names) {
+                if (string.equalsIgnoreCase(name)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 }

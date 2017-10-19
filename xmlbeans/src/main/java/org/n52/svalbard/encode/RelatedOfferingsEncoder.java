@@ -18,13 +18,17 @@ package org.n52.svalbard.encode;
 
 import java.io.ByteArrayOutputStream;
 import java.io.UnsupportedEncodingException;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import javax.xml.stream.XMLStreamException;
 
 import org.apache.xmlbeans.XmlException;
 import org.apache.xmlbeans.XmlObject;
+import org.apache.xmlbeans.XmlOptions;
+
 import org.n52.shetland.ogc.sos.ro.RelatedOfferingConstants;
 import org.n52.shetland.ogc.sos.ro.RelatedOfferings;
 import org.n52.svalbard.encode.exception.EncodingException;
@@ -38,12 +42,13 @@ import org.n52.svalbard.write.RelatedOfferingXmlStreamWriter;
  */
 public class RelatedOfferingsEncoder extends AbstractXmlEncoder<XmlObject, RelatedOfferings> {
 
-    private static final Set<EncoderKey> ENCODER_KEYS = CodingHelper.encoderKeysForElements(RelatedOfferingConstants.NS_RO,
-            RelatedOfferings.class);
+    private static final Set<EncoderKey> ENCODER_KEYS = CodingHelper
+            .encoderKeysForElements(RelatedOfferingConstants.NS_RO,
+                                    RelatedOfferings.class);
 
     @Override
     public Set<EncoderKey> getKeys() {
-        return ENCODER_KEYS;
+        return Collections.unmodifiableSet(ENCODER_KEYS);
     }
 
     @Override
@@ -52,17 +57,19 @@ public class RelatedOfferingsEncoder extends AbstractXmlEncoder<XmlObject, Relat
     }
 
     @Override
-    public XmlObject encode(RelatedOfferings objectToEncode, EncodingContext additionalValues)
+    public XmlObject encode(RelatedOfferings objectToEncode, EncodingContext ctx)
             throws EncodingException {
         try {
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            new RelatedOfferingXmlStreamWriter(objectToEncode).write(out);
-            return XmlObject.Factory.parse(out.toString("UTF8"));
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            EncodingContext context = ctx.with(EncoderFlags.ENCODER_REPOSITORY, getEncoderRepository())
+                    .with(XmlEncoderFlags.XML_OPTIONS, (Supplier<XmlOptions>) this::getXmlOptions);
+
+            new RelatedOfferingXmlStreamWriter(context, baos, objectToEncode).write();
+            return XmlObject.Factory.parse(baos.toString("UTF8"));
         } catch (XMLStreamException | XmlException | UnsupportedEncodingException ex) {
-            throw new EncodingException(String.format("Error encoding %s", objectToEncode.getClass().getSimpleName()), ex);
+            String message = String.format("Error encoding %s", objectToEncode.getClass().getSimpleName());
+            throw new EncodingException(message, ex);
         }
     }
-
-
 
 }

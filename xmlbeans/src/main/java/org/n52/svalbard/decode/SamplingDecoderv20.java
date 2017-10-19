@@ -21,8 +21,16 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import net.opengis.gml.x32.FeaturePropertyType;
+import net.opengis.gml.x32.ReferenceType;
+import net.opengis.samplingSpatial.x20.SFSpatialSamplingFeatureDocument;
+import net.opengis.samplingSpatial.x20.SFSpatialSamplingFeatureType;
+import net.opengis.samplingSpatial.x20.ShapeType;
+
 import org.apache.xmlbeans.XmlException;
 import org.apache.xmlbeans.XmlObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import org.n52.shetland.ogc.OGCConstants;
 import org.n52.shetland.ogc.SupportedType;
@@ -37,11 +45,9 @@ import org.n52.shetland.ogc.sos.SosConstants;
 import org.n52.shetland.util.CollectionHelper;
 import org.n52.svalbard.ConformanceClasses;
 import org.n52.svalbard.decode.exception.DecodingException;
+import org.n52.svalbard.decode.exception.UnsupportedDecoderXmlInputException;
 import org.n52.svalbard.util.CodingHelper;
 import org.n52.svalbard.util.XmlHelper;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
@@ -49,20 +55,18 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.LineString;
+import com.vividsolutions.jts.geom.MultiLineString;
+import com.vividsolutions.jts.geom.MultiPoint;
+import com.vividsolutions.jts.geom.MultiPolygon;
 import com.vividsolutions.jts.geom.Point;
 import com.vividsolutions.jts.geom.Polygon;
 
-import net.opengis.gml.x32.FeaturePropertyType;
-import net.opengis.gml.x32.ReferenceType;
-import net.opengis.samplingSpatial.x20.SFSpatialSamplingFeatureDocument;
-import net.opengis.samplingSpatial.x20.SFSpatialSamplingFeatureType;
-import net.opengis.samplingSpatial.x20.ShapeType;
-
 /**
- * @since 4.0.0
+ * @since 1.0.0
  *
  */
-public class SamplingDecoderv20 extends AbstractGmlDecoderv321<XmlObject, AbstractFeature> {
+public class SamplingDecoderv20
+        extends AbstractGmlDecoderv321<XmlObject, AbstractFeature> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SamplingDecoderv20.class);
 
@@ -114,9 +118,9 @@ public class SamplingDecoderv20 extends AbstractGmlDecoderv321<XmlObject, Abstra
             return parseSpatialSamplingFeature(
                     ((SFSpatialSamplingFeatureDocument) element).getSFSpatialSamplingFeature());
         } else if (element instanceof SFSpatialSamplingFeatureType) {
-            return parseSpatialSamplingFeature(((SFSpatialSamplingFeatureType) element));
+            return parseSpatialSamplingFeature((SFSpatialSamplingFeatureType) element);
         }
-        return null;
+        throw new UnsupportedDecoderXmlInputException(this, element);
     }
 
     private AbstractFeature parseSpatialSamplingFeature(final SFSpatialSamplingFeatureType spatialSamplingFeature)
@@ -241,14 +245,14 @@ public class SamplingDecoderv20 extends AbstractGmlDecoderv321<XmlObject, Abstra
     }
 
     private String getFeatTypeForGeometry(final Geometry geometry) {
-        if (geometry instanceof Point) {
+        if (geometry instanceof Point || geometry instanceof MultiPoint) {
             return SfConstants.SAMPLING_FEAT_TYPE_SF_SAMPLING_POINT;
-        } else if (geometry instanceof LineString) {
+        } else if (geometry instanceof LineString || geometry instanceof MultiLineString) {
             return SfConstants.SAMPLING_FEAT_TYPE_SF_SAMPLING_CURVE;
-        } else if (geometry instanceof Polygon) {
+        } else if (geometry instanceof Polygon || geometry instanceof MultiPolygon) {
             return SfConstants.SAMPLING_FEAT_TYPE_SF_SAMPLING_SURFACE;
         }
-        return OGCConstants.UNKNOWN;
+        return SfConstants.SAMPLING_FEAT_TYPE_SF_SAMPLING_FEATURE;
     }
 
 }

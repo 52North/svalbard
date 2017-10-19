@@ -23,61 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.xmlbeans.XmlObject;
-import org.isotc211.x2005.gmd.CIResponsiblePartyPropertyType;
-
-import org.n52.shetland.ogc.OGCConstants;
-import org.n52.shetland.ogc.SupportedType;
-import org.n52.shetland.ogc.gml.AbstractFeature;
-import org.n52.shetland.ogc.gml.CodeWithAuthority;
-import org.n52.shetland.ogc.gml.ReferenceType;
-import org.n52.shetland.ogc.sensorML.AbstractProcess;
-import org.n52.shetland.ogc.sensorML.AbstractSensorML;
-import org.n52.shetland.ogc.sensorML.SensorML20Constants;
-import org.n52.shetland.ogc.sensorML.SensorMLConstants;
-import org.n52.shetland.ogc.sensorML.SmlContact;
-import org.n52.shetland.ogc.sensorML.Term;
-import org.n52.shetland.ogc.sensorML.elements.SmlCapabilities;
-import org.n52.shetland.ogc.sensorML.elements.SmlCapability;
-import org.n52.shetland.ogc.sensorML.elements.SmlCharacteristic;
-import org.n52.shetland.ogc.sensorML.elements.SmlCharacteristics;
-import org.n52.shetland.ogc.sensorML.elements.SmlClassifier;
-import org.n52.shetland.ogc.sensorML.elements.SmlComponent;
-import org.n52.shetland.ogc.sensorML.elements.SmlIdentifier;
-import org.n52.shetland.ogc.sensorML.elements.SmlIo;
-import org.n52.shetland.ogc.sensorML.elements.SmlPosition;
-import org.n52.shetland.ogc.sensorML.v20.AbstractPhysicalProcess;
-import org.n52.shetland.ogc.sensorML.v20.AbstractProcessV20;
-import org.n52.shetland.ogc.sensorML.v20.AggregateProcess;
-import org.n52.shetland.ogc.sensorML.v20.DescribedObject;
-import org.n52.shetland.ogc.sensorML.v20.PhysicalComponent;
-import org.n52.shetland.ogc.sensorML.v20.PhysicalSystem;
-import org.n52.shetland.ogc.sensorML.v20.SimpleProcess;
-import org.n52.shetland.ogc.sensorML.v20.SmlDataInterface;
-import org.n52.shetland.ogc.sensorML.v20.SmlDataStreamPropertyType;
-import org.n52.shetland.ogc.sensorML.v20.SmlFeatureOfInterest;
-import org.n52.shetland.ogc.sos.ProcedureDescriptionFormat;
-import org.n52.shetland.ogc.sos.Sos2Constants;
-import org.n52.shetland.ogc.sos.SosConstants;
-import org.n52.shetland.ogc.swe.SweAbstractDataComponent;
-import org.n52.shetland.ogc.swe.SweDataRecord;
-import org.n52.shetland.ogc.swe.SweVector;
-import org.n52.shetland.ogc.swe.simpleType.SweObservableProperty;
-import org.n52.shetland.util.CollectionHelper;
-import org.n52.svalbard.decode.exception.DecodingException;
-import org.n52.svalbard.decode.exception.UnsupportedDecoderXmlInputException;
-import org.n52.svalbard.util.CodingHelper;
-import org.n52.svalbard.util.XmlHelper;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.google.common.base.Joiner;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
-
 import net.opengis.gml.x32.FeaturePropertyType;
 import net.opengis.sensorml.x20.AbstractPhysicalProcessType;
 import net.opengis.sensorml.x20.AbstractProcessDocument;
@@ -124,14 +69,69 @@ import net.opengis.sensorml.x20.SimpleProcessType;
 import net.opengis.sensorml.x20.TermType;
 import net.opengis.swe.x20.DataStreamPropertyType;
 
+import org.apache.xmlbeans.XmlObject;
+import org.isotc211.x2005.gmd.CIResponsiblePartyPropertyType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import org.n52.shetland.ogc.OGCConstants;
+import org.n52.shetland.ogc.SupportedType;
+import org.n52.shetland.ogc.gml.AbstractFeature;
+import org.n52.shetland.ogc.gml.CodeWithAuthority;
+import org.n52.shetland.ogc.gml.ReferenceType;
+import org.n52.shetland.ogc.sensorML.AbstractProcess;
+import org.n52.shetland.ogc.sensorML.AbstractSensorML;
+import org.n52.shetland.ogc.sensorML.SensorML20Constants;
+import org.n52.shetland.ogc.sensorML.SensorMLConstants;
+import org.n52.shetland.ogc.sensorML.SmlContact;
+import org.n52.shetland.ogc.sensorML.Term;
+import org.n52.shetland.ogc.sensorML.elements.SmlCapabilities;
+import org.n52.shetland.ogc.sensorML.elements.SmlCapability;
+import org.n52.shetland.ogc.sensorML.elements.SmlCharacteristic;
+import org.n52.shetland.ogc.sensorML.elements.SmlCharacteristics;
+import org.n52.shetland.ogc.sensorML.elements.SmlClassifier;
+import org.n52.shetland.ogc.sensorML.elements.SmlComponent;
+import org.n52.shetland.ogc.sensorML.elements.SmlIdentifier;
+import org.n52.shetland.ogc.sensorML.elements.SmlIo;
+import org.n52.shetland.ogc.sensorML.elements.SmlPosition;
+import org.n52.shetland.ogc.sensorML.v20.AbstractPhysicalProcess;
+import org.n52.shetland.ogc.sensorML.v20.AbstractProcessV20;
+import org.n52.shetland.ogc.sensorML.v20.AggregateProcess;
+import org.n52.shetland.ogc.sensorML.v20.DescribedObject;
+import org.n52.shetland.ogc.sensorML.v20.PhysicalComponent;
+import org.n52.shetland.ogc.sensorML.v20.PhysicalSystem;
+import org.n52.shetland.ogc.sensorML.v20.SimpleProcess;
+import org.n52.shetland.ogc.sensorML.v20.SmlDataInterface;
+import org.n52.shetland.ogc.sensorML.v20.SmlDataStreamPropertyType;
+import org.n52.shetland.ogc.sensorML.v20.SmlFeatureOfInterest;
+import org.n52.shetland.ogc.sos.ProcedureDescriptionFormat;
+import org.n52.shetland.ogc.sos.Sos2Constants;
+import org.n52.shetland.ogc.sos.SosConstants;
+import org.n52.shetland.ogc.swe.SweAbstractDataComponent;
+import org.n52.shetland.ogc.swe.SweDataRecord;
+import org.n52.shetland.ogc.swe.SweVector;
+import org.n52.shetland.ogc.swe.simpleType.SweObservableProperty;
+import org.n52.shetland.util.CollectionHelper;
+import org.n52.svalbard.decode.exception.DecodingException;
+import org.n52.svalbard.decode.exception.UnsupportedDecoderXmlInputException;
+import org.n52.svalbard.util.CodingHelper;
+import org.n52.svalbard.util.XmlHelper;
+
+import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
+
 /**
  * {@link AbstractSensorMLDecoder} class to decode OGC SensorML 2.0
  *
- * @author Carsten Hollmann <c.hollmann@52north.org>
- * @since 4.2.0
+ * @author Carsten Hollmann
+ * @since 1.0.0
  *
  */
-public class SensorMLDecoderV20 extends AbstractSensorMLDecoder {
+public class SensorMLDecoderV20
+        extends AbstractSensorMLDecoder {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SensorMLDecoderV20.class);
 
@@ -148,10 +148,12 @@ public class SensorMLDecoderV20 extends AbstractSensorMLDecoder {
     private static final ImmutableSet<SupportedType> SUPPORTED_TYPES = ImmutableSet.<SupportedType> builder()
             .add(new ProcedureDescriptionFormat(SensorML20Constants.SENSORML_20_OUTPUT_FORMAT_URL)).build();
 
+    // CHECKSTYLE:OFF
     private static final Map<String, ImmutableMap<String, Set<String>>> SUPPORTED_TRANSACTIONAL_PROCEDURE_DESCRIPTION_FORMATS =
             ImmutableMap.of(SosConstants.SOS, ImmutableMap.<String, Set<String>> builder()
                     .put(Sos2Constants.SERVICEVERSION, ImmutableSet.of(SensorMLConstants.SENSORML_OUTPUT_FORMAT_URL))
                     .build());
+    // CHECKSTYLE:ON
 
     public SensorMLDecoderV20() {
         LOGGER.debug("Decoder for the following keys initialized successfully: {}!",
@@ -377,9 +379,9 @@ public class SensorMLDecoderV20 extends AbstractSensorMLDecoder {
                 abstractProcess.setTypeOf((ReferenceType) decodedElement);
             }
         }
-        if (apt.isSetConfiguration()) {
-
-        }
+        // if (apt.isSetConfiguration()) {
+        //
+        // }
         if (apt.isSetFeaturesOfInterest()) {
             parseFeatureOfInterest(apt.getFeaturesOfInterest(), abstractProcess);
         }
@@ -389,9 +391,9 @@ public class SensorMLDecoderV20 extends AbstractSensorMLDecoder {
         if (apt.isSetOutputs()) {
             abstractProcess.setOutputs(parseOutputs(apt.getOutputs()));
         }
-        if (CollectionHelper.isNotNullOrEmpty(apt.getModesArray())) {
-
-        }
+        // if (CollectionHelper.isNotNullOrEmpty(apt.getModesArray())) {
+        //
+        // }
     }
 
     private void parseAbstractPhysicalProcess(AbstractPhysicalProcessType appt,
@@ -403,12 +405,15 @@ public class SensorMLDecoderV20 extends AbstractSensorMLDecoder {
                 abstractPhysicalProcess.setAttachedTo((ReferenceType) decodeXmlElement);
             }
         }
-        if (CollectionHelper.isNotNullOrEmpty(appt.getLocalReferenceFrameArray())) {
-
-        }
-        if (CollectionHelper.isNotNullOrEmpty(appt.getLocalTimeFrameArray())) {
-
-        }
+        // if
+        // (CollectionHelper.isNotNullOrEmpty(appt.getLocalReferenceFrameArray()))
+        // {
+        //
+        // }
+        // if (CollectionHelper.isNotNullOrEmpty(appt.getLocalTimeFrameArray()))
+        // {
+        //
+        // }
         if (CollectionHelper.isNotNullOrEmpty(appt.getPositionArray())) {
             for (PositionUnionPropertyType pupt : appt.getPositionArray()) {
                 abstractPhysicalProcess.setPosition(parsePositionFrom(pupt));
@@ -416,9 +421,9 @@ public class SensorMLDecoderV20 extends AbstractSensorMLDecoder {
                 break;
             }
         }
-        if (CollectionHelper.isNotNullOrEmpty(appt.getTimePositionArray())) {
-
-        }
+        // if (CollectionHelper.isNotNullOrEmpty(appt.getTimePositionArray())) {
+        //
+        // }
     }
 
     private List<String> parseKeywords(final KeywordListPropertyType[] keywordsArray) {
@@ -520,7 +525,9 @@ public class SensorMLDecoderV20 extends AbstractSensorMLDecoder {
                                 characteristic.setAbstractDataComponent((SweAbstractDataComponent) o);
                             } else {
                                 throw new DecodingException(XmlHelper.getLocalName(clpt),
-                                        "Error while parsing the characteristics of the SensorML (the characteristics' data record is not of type DataRecordPropertyType)!");
+                                        "Error while parsing the characteristics of the SensorML "
+                                                + "(the characteristics' data record is not of "
+                                                + "type DataRecordPropertyType)!");
                             }
                         } else if (c.isSetHref()) {
                             characteristic.setHref(c.getHref());
@@ -805,7 +812,8 @@ public class SensorMLDecoderV20 extends AbstractSensorMLDecoder {
                 return (SweAbstractDataComponent) decodedObject;
             } else {
                 throw new DecodingException(XmlHelper.getLocalName(adcpt),
-                        "The 'DataComponentOrObservablePropertyType' with type '%s' as value for '%s' is not supported.",
+                        "The 'DataComponentOrObservablePropertyType' with "
+                                + "type '%s' as value for '%s' is not supported.",
                         XmlHelper.getLocalName(toDecode), XmlHelper.getLocalName(adcpt));
             }
         } else if (adcpt.isSetDataInterface()) {

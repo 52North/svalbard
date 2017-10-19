@@ -21,15 +21,85 @@ import static java.util.stream.Collectors.joining;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.xmlbeans.XmlException;
+import org.apache.xmlbeans.XmlObject;
+import org.apache.xmlbeans.XmlString;
+import org.joda.time.DateTime;
+import org.n52.janmayen.NcName;
+import org.n52.shetland.ogc.OGCConstants;
+import org.n52.shetland.ogc.UoM;
+import org.n52.shetland.ogc.sensorML.elements.SmlPosition;
+import org.n52.shetland.ogc.sensorML.v20.SmlDataInterface;
+import org.n52.shetland.ogc.sensorML.v20.SmlFeatureOfInterest;
+import org.n52.shetland.ogc.sos.Sos2Constants;
+import org.n52.shetland.ogc.sos.SosConstants;
+import org.n52.shetland.ogc.swe.RangeValue;
+import org.n52.shetland.ogc.swe.SweAbstractDataComponent;
+import org.n52.shetland.ogc.swe.SweConstants;
+import org.n52.shetland.ogc.swe.SweCoordinate;
+import org.n52.shetland.ogc.swe.SweDataArray;
+import org.n52.shetland.ogc.swe.SweDataComponentVisitor;
+import org.n52.shetland.ogc.swe.SweDataRecord;
+import org.n52.shetland.ogc.swe.SweEnvelope;
+import org.n52.shetland.ogc.swe.SweField;
+import org.n52.shetland.ogc.swe.SweSimpleDataRecord;
+import org.n52.shetland.ogc.swe.SweVector;
+import org.n52.shetland.ogc.swe.encoding.SweAbstractEncoding;
+import org.n52.shetland.ogc.swe.encoding.SweTextEncoding;
+import org.n52.shetland.ogc.swe.simpleType.SweAllowedTimes;
+import org.n52.shetland.ogc.swe.simpleType.SweAllowedTokens;
+import org.n52.shetland.ogc.swe.simpleType.SweAllowedValues;
+import org.n52.shetland.ogc.swe.simpleType.SweBoolean;
+import org.n52.shetland.ogc.swe.simpleType.SweCategory;
+import org.n52.shetland.ogc.swe.simpleType.SweCategoryRange;
+import org.n52.shetland.ogc.swe.simpleType.SweCount;
+import org.n52.shetland.ogc.swe.simpleType.SweCountRange;
+import org.n52.shetland.ogc.swe.simpleType.SweObservableProperty;
+import org.n52.shetland.ogc.swe.simpleType.SweQuality;
+import org.n52.shetland.ogc.swe.simpleType.SweQuantity;
+import org.n52.shetland.ogc.swe.simpleType.SweQuantityRange;
+import org.n52.shetland.ogc.swe.simpleType.SweText;
+import org.n52.shetland.ogc.swe.simpleType.SweTime;
+import org.n52.shetland.ogc.swe.simpleType.SweTimeRange;
+import org.n52.shetland.ogc.swe.stream.StreamingSweDataArray;
+import org.n52.shetland.ogc.swes.SwesConstants;
+import org.n52.shetland.util.DateTimeHelper;
+import org.n52.shetland.w3c.Nillable;
+import org.n52.shetland.w3c.SchemaLocation;
+import org.n52.shetland.w3c.xlink.Referenceable;
+import org.n52.svalbard.ConformanceClass;
+import org.n52.svalbard.ConformanceClasses;
+import org.n52.svalbard.encode.exception.EncodingException;
+import org.n52.svalbard.encode.exception.NotYetSupportedEncodingException;
+import org.n52.svalbard.encode.exception.UnsupportedEncoderInputException;
+import org.n52.svalbard.util.CodingHelper;
+import org.n52.svalbard.util.XmlHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.w3.x1999.xlink.ActuateType;
+import org.w3.x1999.xlink.ShowType;
+import org.w3.x1999.xlink.TypeType;
+
+import com.google.common.base.Strings;
+import com.google.common.collect.Lists;
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.opengis.swe.x20.AbstractDataComponentType;
 import net.opengis.swe.x20.AbstractEncodingDocument;
 import net.opengis.swe.x20.AbstractEncodingType;
+import net.opengis.swe.x20.AllowedTimesPropertyType;
+import net.opengis.swe.x20.AllowedTimesType;
+import net.opengis.swe.x20.AllowedTokensPropertyType;
+import net.opengis.swe.x20.AllowedTokensType;
+import net.opengis.swe.x20.AllowedValuesPropertyType;
+import net.opengis.swe.x20.AllowedValuesType;
 import net.opengis.swe.x20.BooleanDocument;
 import net.opengis.swe.x20.BooleanPropertyType;
 import net.opengis.swe.x20.BooleanType;
@@ -59,6 +129,7 @@ import net.opengis.swe.x20.DataRecordType.Field;
 import net.opengis.swe.x20.MatrixDocument;
 import net.opengis.swe.x20.MatrixPropertyType;
 import net.opengis.swe.x20.MatrixType;
+import net.opengis.swe.x20.QualityPropertyType;
 import net.opengis.swe.x20.QuantityDocument;
 import net.opengis.swe.x20.QuantityPropertyType;
 import net.opengis.swe.x20.QuantityRangeDocument;
@@ -82,79 +153,35 @@ import net.opengis.swe.x20.VectorPropertyType;
 import net.opengis.swe.x20.VectorType;
 import net.opengis.swe.x20.VectorType.Coordinate;
 
-import org.apache.xmlbeans.XmlException;
-import org.apache.xmlbeans.XmlObject;
-import org.apache.xmlbeans.XmlString;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import org.n52.janmayen.NcName;
-import org.n52.shetland.ogc.OGCConstants;
-import org.n52.shetland.ogc.sensorML.elements.SmlPosition;
-import org.n52.shetland.ogc.sensorML.v20.SmlDataInterface;
-import org.n52.shetland.ogc.sensorML.v20.SmlFeatureOfInterest;
-import org.n52.shetland.ogc.sos.Sos2Constants;
-import org.n52.shetland.ogc.sos.SosConstants;
-import org.n52.shetland.ogc.swe.SweAbstractDataComponent;
-import org.n52.shetland.ogc.swe.SweConstants;
-import org.n52.shetland.ogc.swe.SweCoordinate;
-import org.n52.shetland.ogc.swe.SweDataArray;
-import org.n52.shetland.ogc.swe.SweDataComponentVisitor;
-import org.n52.shetland.ogc.swe.SweDataRecord;
-import org.n52.shetland.ogc.swe.SweEnvelope;
-import org.n52.shetland.ogc.swe.SweField;
-import org.n52.shetland.ogc.swe.SweSimpleDataRecord;
-import org.n52.shetland.ogc.swe.SweVector;
-import org.n52.shetland.ogc.swe.encoding.SweAbstractEncoding;
-import org.n52.shetland.ogc.swe.encoding.SweTextEncoding;
-import org.n52.shetland.ogc.swe.simpleType.SweBoolean;
-import org.n52.shetland.ogc.swe.simpleType.SweCategory;
-import org.n52.shetland.ogc.swe.simpleType.SweCount;
-import org.n52.shetland.ogc.swe.simpleType.SweCountRange;
-import org.n52.shetland.ogc.swe.simpleType.SweObservableProperty;
-import org.n52.shetland.ogc.swe.simpleType.SweQuantity;
-import org.n52.shetland.ogc.swe.simpleType.SweQuantityRange;
-import org.n52.shetland.ogc.swe.simpleType.SweText;
-import org.n52.shetland.ogc.swe.simpleType.SweTime;
-import org.n52.shetland.ogc.swe.simpleType.SweTimeRange;
-import org.n52.shetland.ogc.swes.SwesConstants;
-import org.n52.shetland.w3c.SchemaLocation;
-import org.n52.svalbard.ConformanceClass;
-import org.n52.svalbard.ConformanceClasses;
-import org.n52.svalbard.SosHelperValues;
-import org.n52.svalbard.XmlBeansEncodingFlags;
-import org.n52.svalbard.encode.exception.EncodingException;
-import org.n52.svalbard.encode.exception.NotYetSupportedEncodingException;
-import org.n52.svalbard.encode.exception.UnsupportedEncoderInputException;
-import org.n52.svalbard.util.CodingHelper;
-import org.n52.svalbard.util.XmlHelper;
-
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-
-public class SweCommonEncoderv20 extends AbstractXmlEncoder<XmlObject, Object> implements ConformanceClass {
+public class SweCommonEncoderv20
+        extends AbstractXmlEncoder<XmlObject, Object>
+        implements ConformanceClass {
     private static final Logger LOGGER = LoggerFactory.getLogger(SweCommonEncoderv20.class);
 
-    private static final Set<EncoderKey> ENCODER_KEYS = CodingHelper.encoderKeysForElements(
-            SweConstants.NS_SWE_20,
+    private static final String URN = "urn:";
+    private static final String HTTP = "http://";
+
+    private static final String DATA_RECORD_HAS_NO_FIELDS = "DataRecord contained no fields1";
+
+    private static final String DATA_RECORD_FIELD_IS_NULL = "DataRcord field is null!";
+
+    private static final String QUALITY_NOT_SUPPORTED = "Quality encoding is not supported for {}!";
+
+    private static final Set<EncoderKey> ENCODER_KEYS = CodingHelper.encoderKeysForElements(SweConstants.NS_SWE_20,
             SweCoordinate.class, SweAbstractEncoding.class, SweAbstractDataComponent.class);
 
-    private static final Set<String> CONFORMANCE_CLASSES = new HashSet<>(Arrays.asList(
-            ConformanceClasses.SWE_V2_CORE,
-            ConformanceClasses.SWE_V2_UML_SIMPLE_COMPONENTS,
-            ConformanceClasses.SWE_V2_UML_RECORD_COMPONENTS,
-            ConformanceClasses.SWE_V2_UML_BLOCK_ENCODINGS,
-            ConformanceClasses.SWE_V2_UML_SIMPLE_ENCODINGS,
-            ConformanceClasses.SWE_V2_XSD_SIMPLE_COMPONENTS,
-            ConformanceClasses.SWE_V2_XSD_RECORD_COMPONENTS,
-            ConformanceClasses.SWE_V2_XSD_BLOCK_COMPONENTS,
-            ConformanceClasses.SWE_V2_XSD_SIMPLE_ENCODINGS,
-            ConformanceClasses.SWE_V2_GENERAL_ENCODING_RULES,
-            ConformanceClasses.SWE_V2_TEXT_ENCODING_RULES));
+    private static final Set<String> CONFORMANCE_CLASSES = new HashSet<>(Arrays.asList(ConformanceClasses.SWE_V2_CORE,
+            ConformanceClasses.SWE_V2_UML_SIMPLE_COMPONENTS, ConformanceClasses.SWE_V2_UML_RECORD_COMPONENTS,
+            ConformanceClasses.SWE_V2_UML_BLOCK_ENCODINGS, ConformanceClasses.SWE_V2_UML_SIMPLE_ENCODINGS,
+            ConformanceClasses.SWE_V2_XSD_SIMPLE_COMPONENTS, ConformanceClasses.SWE_V2_XSD_RECORD_COMPONENTS,
+            ConformanceClasses.SWE_V2_XSD_BLOCK_COMPONENTS, ConformanceClasses.SWE_V2_XSD_SIMPLE_ENCODINGS,
+            ConformanceClasses.SWE_V2_GENERAL_ENCODING_RULES, ConformanceClasses.SWE_V2_TEXT_ENCODING_RULES));
+
     private static final String DEFAULT_ELEMENT_TYPE_NAME = "Components";
 
     public SweCommonEncoderv20() {
         LOGGER.debug("Encoder for the following keys initialized successfully: {}!",
-                     ENCODER_KEYS.stream().map(EncoderKey::toString).collect(joining(", ")));
+                ENCODER_KEYS.stream().map(EncoderKey::toString).collect(joining(", ")));
     }
 
     @Override
@@ -181,13 +208,15 @@ public class SweCommonEncoderv20 extends AbstractXmlEncoder<XmlObject, Object> i
     }
 
     @Override
-    public XmlObject encode(Object sosSweType, EncodingContext additionalValues) throws EncodingException {
+    public XmlObject encode(Object sosSweType, EncodingContext additionalValues)
+            throws EncodingException {
         return XmlHelper.validateDocument(encode1(sosSweType, additionalValues), EncodingException::new);
     }
 
-    private XmlObject encode1(Object sosSweType, EncodingContext additionalValues) throws EncodingException {
+    private XmlObject encode1(Object sosSweType, EncodingContext additionalValues)
+            throws EncodingException {
         if (sosSweType instanceof SweCoordinate) {
-            return createCoordinate((SweCoordinate) sosSweType);
+            return createCoordinate((SweCoordinate<?>) sosSweType);
         } else if (sosSweType instanceof SweAbstractEncoding) {
             AbstractEncodingType encoding = createAbstractEncoding((SweAbstractEncoding) sosSweType);
             if (additionalValues.has(XmlBeansEncodingFlags.DOCUMENT)) {
@@ -211,296 +240,12 @@ public class SweCommonEncoderv20 extends AbstractXmlEncoder<XmlObject, Object> i
     }
 
     @SuppressFBWarnings("NP_LOAD_OF_KNOWN_NULL_VALUE")
-    private XmlObject createAbstractDataComponent(SweAbstractDataComponent component,
-                                                  EncodingContext additionalValues) throws EncodingException {
+    private XmlObject createAbstractDataComponent(SweAbstractDataComponent component, EncodingContext additionalValues)
+            throws EncodingException {
         if (component == null) {
             throw new UnsupportedEncoderInputException(this, component);
         }
-
-        AbstractDataComponentType xmlComponent = component
-                .accept(new SweDataComponentVisitor<AbstractDataComponentType, EncodingException>() {
-                    @Override
-                    public AbstractDataComponentType visit(SweField component) throws EncodingException {
-                        return unsupported(component);
-                    }
-
-                    @Override
-                    public AbstractDataComponentType visit(SweDataRecord component) throws EncodingException {
-                        List<SweField> sosFields = component.getFields();
-                        DataRecordType xbDataRecord = DataRecordType.Factory.newInstance(getXmlOptions());
-                        if (sosFields == null) {
-                            LOGGER.error("sosDataRecord contained no fields");
-                        } else {
-                            List<Field> xbFields = new ArrayList<>(sosFields.size());
-                            for (SweField sosSweField : sosFields) {
-                                if (sosSweField == null) {
-                                    LOGGER.error("sosSweField is null is sosDataRecord");
-                                } else {
-                                    xbFields.add(createField(sosSweField));
-                                }
-                            }
-                            xbDataRecord.setFieldArray(xbFields.toArray(new Field[xbFields.size()]));
-                        }
-                        return xbDataRecord;
-                    }
-
-                    @Override
-                    public AbstractDataComponentType visit(SweDataArray component) throws EncodingException {
-                        if (component == null) {
-                            return null;
-                        }
-                        if (component.isSetXml()) {
-                            try {
-                                XmlObject parse = XmlObject.Factory.parse(component.getXml());
-                                if (parse instanceof DataArrayType) {
-                                    return (DataArrayType) parse;
-                                } else if (parse instanceof DataArrayDocument) {
-                                    return ((DataArrayDocument) parse).getDataArray1();
-                                }
-                            } catch (XmlException e) {
-                                LOGGER.warn("Error while parsing XML representation of DataArray^", e);
-                            }
-                        }
-                        DataArrayType xmlDataArray = DataArrayType.Factory.newInstance(getXmlOptions());
-                        if (component.isSetElementCount()) {
-                            CountType xbCount = CountType.Factory.newInstance(getXmlOptions());
-                            if (component.getElementCount().isSetValue()) {
-                                xbCount
-                                        .setValue(new BigInteger(Integer
-                                                .toString(component.getElementCount().getValue())));
-                            }
-                            xmlDataArray.addNewElementCount().setCount(xbCount);
-                        } else {
-                            xmlDataArray.addNewElementCount().addNewCount();
-                        }
-                        if (component.isSetElementTyp()) {
-                            DataArrayType.ElementType elementType = xmlDataArray.addNewElementType();
-                            if (component.getElementType().isSetDefinition()) {
-                                elementType.setName(component.getElementType().getDefinition());
-                            } else {
-                                elementType.setName(SweCommonEncoderv20.DEFAULT_ELEMENT_TYPE_NAME);
-                            }
-                            List<SweField> sosFields = ((SweDataRecord) component.getElementType()).getFields();
-                            DataRecordType xbDataRecord = DataRecordType.Factory.newInstance(getXmlOptions());
-                            if (sosFields == null) {
-                                LOGGER.error("sosDataRecord contained no fields");
-                            } else {
-                                List<Field> xbFields = new ArrayList<>(sosFields.size());
-                                for (SweField sosSweField : sosFields) {
-                                    if (sosSweField == null) {
-                                        LOGGER.error("sosSweField is null is sosDataRecord");
-                                    } else {
-                                        xbFields.add(createField(sosSweField));
-                                    }
-                                }
-                                xbDataRecord.setFieldArray(xbFields.toArray(new Field[xbFields.size()]));
-                            }
-                            elementType.addNewAbstractDataComponent()
-                                    .set(xbDataRecord);
-                            elementType.getAbstractDataComponent()
-                                    .substitute(SweConstants.QN_DATA_RECORD_SWE_200, DataRecordType.type);
-                        }
-                        if (component.isSetEncoding()) {
-                            Encoding xbEncoding = xmlDataArray.addNewEncoding();
-                            xbEncoding.setAbstractEncoding(createAbstractEncoding(component.getEncoding()));
-                            xbEncoding.getAbstractEncoding()
-                                    .substitute(SweConstants.QN_TEXT_ENCODING_SWE_200, TextEncodingType.type);
-                        }
-                        if (component.isSetValues()) {
-                            xmlDataArray.addNewValues()
-                                    .set(createValues(component.getValues(), component.getEncoding()));
-                        }
-                        return xmlDataArray;
-                    }
-
-                    @Override
-                    public AbstractDataComponentType visit(SweCount component) throws EncodingException {
-                        CountType xbCount = CountType.Factory.newInstance(getXmlOptions());
-                        if (component.isSetValue()) {
-                            xbCount.setValue(new BigInteger(Integer.toString(component.getValue())));
-                        }
-                        return xbCount;
-                    }
-
-                    @Override
-                    public AbstractDataComponentType visit(SweCountRange component) throws EncodingException {
-                        CountRangeType xml = CountRangeType.Factory.newInstance(getXmlOptions());
-                        if (component.isSetValue()) {
-                            xml.setValue(component.getValue().getRangeAsList());
-                        }
-                        return xml;
-                    }
-
-                    @Override
-                    public AbstractDataComponentType visit(SweBoolean component) throws EncodingException {
-                        BooleanType xbBoolean = BooleanType.Factory.newInstance(getXmlOptions());
-                        if (component.isSetValue()) {
-                            xbBoolean.setValue(component.getValue());
-                        }
-                        return xbBoolean;
-                    }
-
-                    @Override
-                    public AbstractDataComponentType visit(SweCategory component) throws EncodingException {
-                        CategoryType xbCategory = CategoryType.Factory.newInstance(getXmlOptions());
-                        if (component.getCodeSpace() != null) {
-                            xbCategory.addNewCodeSpace().setHref(component.getCodeSpace());
-                        }
-                        if (component.isSetValue()) {
-                            xbCategory.setValue(component.getValue());
-                        }
-                        return xbCategory;
-                    }
-
-                    @Override
-                    public AbstractDataComponentType visit(SweObservableProperty component) throws EncodingException {
-                        return unsupported(component);
-                    }
-
-                    @Override
-                    public AbstractDataComponentType visit(SweQuantity component) throws EncodingException {
-                        QuantityType xbQuantity = QuantityType.Factory.newInstance(getXmlOptions());
-                        if (component.isSetAxisID()) {
-                            xbQuantity.setAxisID(component.getAxisID());
-                        }
-                        if (component.isSetValue()) {
-                            xbQuantity.setValue(component.getValue());
-                        }
-                        if (component.isSetUom()) {
-                            xbQuantity.setUom(createUnitReference(component.getUom()));
-                        } else {
-                            xbQuantity.setUom(createUnknownUnitReference());
-                        }
-                        if (component.getQuality() != null) {
-                            // TODO implement
-                            LOGGER.warn("Quality encoding is not supported for {}", xbQuantity.schemaType());
-                        }
-                        return xbQuantity;
-                    }
-
-                    @Override
-                    public AbstractDataComponentType visit(SweQuantityRange component) throws EncodingException {
-                        QuantityRangeType xbQuantityRange = QuantityRangeType.Factory.newInstance(getXmlOptions());
-                        if (component.isSetAxisID()) {
-                            xbQuantityRange.setAxisID(component.getAxisID());
-                        }
-                        if (component.isSetValue()) {
-                            xbQuantityRange.setValue(component.getValue().getRangeAsList());
-                        }
-                        if (component.isSetUom()) {
-                            xbQuantityRange.setUom(createUnitReference(component.getUom()));
-                        } else {
-                            xbQuantityRange.setUom(createUnknownUnitReference());
-                        }
-                        if (component.isSetQuality()) {
-                            // TODO implement
-                            LOGGER.warn("Quality encoding is not supported for {}", xbQuantityRange.schemaType());
-                        }
-                        return xbQuantityRange;
-                    }
-
-                    @Override
-                    public AbstractDataComponentType visit(SweText component) throws EncodingException {
-                        TextType xbText = TextType.Factory.newInstance(getXmlOptions());
-                        if (component.isSetValue()) {
-                            xbText.setValue(component.getValue());
-                        }
-                        return xbText;
-                    }
-
-                    @Override
-                    public AbstractDataComponentType visit(SweTime component) throws EncodingException {
-                        TimeType xbTime = TimeType.Factory.newInstance(getXmlOptions());
-                        if (component.isSetValue()) {
-                            xbTime.setValue(component.getValue());
-                        }
-                        if (component.isSetUom()) {
-                            xbTime.setUom(createUnitReference(component.getUom()));
-                        }
-                        if (component.getQuality() != null) {
-                            // TODO implement
-                            LOGGER.warn("Quality encoding is not supported for {}", xbTime.schemaType());
-                        }
-                        return xbTime;
-                    }
-
-                    @Override
-                    public AbstractDataComponentType visit(SweTimeRange component) throws EncodingException {
-                        TimeRangeType xbTimeRange = TimeRangeType.Factory.newInstance(getXmlOptions());
-                        if (component.isSetUom()) {
-                            xbTimeRange.addNewUom().setHref(component.getUom());
-                        }
-                        if (component.isSetValue()) {
-                            xbTimeRange.setValue(component.getValue().getRangeAsStringList());
-                        }
-                        if (component.isSetQuality()) {
-                            // TODO implement
-                            LOGGER.warn("Quality encoding is not supported for {}", xbTimeRange.schemaType());
-                        }
-                        return xbTimeRange;
-                    }
-
-                    @Override
-                    public AbstractDataComponentType visit(SweEnvelope component) throws EncodingException {
-                        return unsupported(component);
-                    }
-
-                    @Override
-                    public AbstractDataComponentType visit(SweVector component) throws EncodingException {
-                        VectorType xbVector = VectorType.Factory.newInstance(getXmlOptions());
-                        if (component.isSetReferenceFrame()) {
-                            xbVector.setReferenceFrame(component.getReferenceFrame());
-                        }
-                        if (component.isSetLocalFrame()) {
-                            xbVector.setLocalFrame(component.getLocalFrame());
-                        }
-                        if (component.isSetCoordinates()) {
-                            for (SweCoordinate<?> coordinate : component.getCoordinates()) {
-                                xbVector.addNewCoordinate().set(createCoordinate(coordinate));
-                            }
-                        }
-                        return xbVector;
-                    }
-
-                    @Override
-                    public AbstractDataComponentType visit(SweSimpleDataRecord component) throws EncodingException {
-                        return unsupported(component);
-                    }
-
-                    @Override
-                    public AbstractDataComponentType visit(SmlPosition component) throws EncodingException {
-                        return unsupported(component);
-                    }
-
-                    @Override
-                    public AbstractDataComponentType visit(SmlDataInterface component) throws EncodingException {
-                        return unsupported(component);
-                    }
-
-                    @Override
-                    public AbstractDataComponentType visit(SmlFeatureOfInterest component) throws EncodingException {
-                        return unsupported(component);
-                    }
-
-                    @SuppressFBWarnings("VA_FORMAT_STRING_USES_NEWLINE")
-                    private AbstractDataComponentType unsupported(SweAbstractDataComponent component)
-                            throws EncodingException {
-
-                        String xml = component.getXml();
-
-                        if (xml != null && !xml.isEmpty()) {
-                            try {
-                                return (AbstractDataComponentType) XmlObject.Factory.parse(xml, getXmlOptions());
-                            } catch (XmlException ex) {
-                                String message = String.format("Error while decoding %s:\n%s",
-                                                               SweAbstractDataComponent.class.getName(), xml);
-                                throw new EncodingException(ex, message);
-                            }
-                        }
-                        throw new NotYetSupportedEncodingException(SweAbstractDataComponent.class.getName(), component);
-                    }
-                });
-
+        AbstractDataComponentType xmlComponent = component.accept(new SweDataComponentVisitorImpl());
         if (component.isSetDefinition()) {
             xmlComponent.setDefinition(component.getDefinition());
         }
@@ -514,9 +259,8 @@ public class SweCommonEncoderv20 extends AbstractXmlEncoder<XmlObject, Object> i
             xmlComponent.setLabel(component.getLabel());
         }
 
-        if (additionalValues.has(XmlBeansEncodingFlags.PROPERTY_TYPE) ||
-            // TODO remove this
-            additionalValues.has(SosHelperValues.FOR_OBSERVATION)) {
+        if (additionalValues.has(XmlBeansEncodingFlags.PROPERTY_TYPE)
+                || additionalValues.has(XmlBeansEncodingFlags.FOR_OBSERVATION)) {
             return asPropertyType(xmlComponent);
         } else if (additionalValues.has(XmlBeansEncodingFlags.DOCUMENT)) {
             return asDocument(xmlComponent);
@@ -525,7 +269,8 @@ public class SweCommonEncoderv20 extends AbstractXmlEncoder<XmlObject, Object> i
         }
     }
 
-    private XmlObject asPropertyType(AbstractDataComponentType type) throws NotYetSupportedEncodingException {
+    private XmlObject asPropertyType(AbstractDataComponentType type)
+            throws NotYetSupportedEncodingException {
         if (type instanceof BooleanType) {
             BooleanPropertyType propertyType = BooleanPropertyType.Factory.newInstance();
             propertyType.setBoolean((BooleanType) type);
@@ -591,7 +336,8 @@ public class SweCommonEncoderv20 extends AbstractXmlEncoder<XmlObject, Object> i
         }
     }
 
-    private XmlObject asDocument(AbstractDataComponentType type) throws NotYetSupportedEncodingException {
+    private XmlObject asDocument(AbstractDataComponentType type)
+            throws NotYetSupportedEncodingException {
         if (type instanceof BooleanType) {
             BooleanDocument document = BooleanDocument.Factory.newInstance();
             document.setBoolean((BooleanType) type);
@@ -669,7 +415,8 @@ public class SweCommonEncoderv20 extends AbstractXmlEncoder<XmlObject, Object> i
         return xmlString;
     }
 
-    private DataRecordType.Field createField(SweField field) throws EncodingException {
+    private DataRecordType.Field createField(SweField field)
+            throws EncodingException {
         SweAbstractDataComponent element = field.getElement();
         DataRecordType.Field xmlField = DataRecordType.Field.Factory.newInstance(getXmlOptions());
 
@@ -678,16 +425,18 @@ public class SweCommonEncoderv20 extends AbstractXmlEncoder<XmlObject, Object> i
         }
 
         XmlObject encodeObjectToXml = createAbstractDataComponent(element, EncodingContext.empty());
-        XmlObject substituteElement = XmlHelper
-                .substituteElement(xmlField.addNewAbstractDataComponent(), encodeObjectToXml);
+        XmlObject substituteElement =
+                XmlHelper.substituteElement(xmlField.addNewAbstractDataComponent(), encodeObjectToXml);
         substituteElement.set(encodeObjectToXml);
         return xmlField;
     }
 
-    private Coordinate createCoordinate(SweCoordinate<?> coordinate) throws EncodingException {
+    private Coordinate createCoordinate(SweCoordinate<?> coordinate)
+            throws EncodingException {
         Coordinate xbCoordinate = Coordinate.Factory.newInstance(getXmlOptions());
         xbCoordinate.setName(coordinate.getName());
-        xbCoordinate.setQuantity((QuantityType) createAbstractDataComponent((SweQuantity) coordinate.getValue(), null));
+        xbCoordinate.setQuantity((QuantityType) createAbstractDataComponent((SweQuantity) coordinate.getValue(),
+                EncodingContext.empty()));
         return xbCoordinate;
     }
 
@@ -728,14 +477,215 @@ public class SweCommonEncoderv20 extends AbstractXmlEncoder<XmlObject, Object> i
         return xml;
     }
 
-    private UnitReference createUnitReference(String uom) {
-        UnitReference unitReference = UnitReference.Factory.newInstance(getXmlOptions());
-        if (uom.startsWith("urn:") || uom.startsWith("http://")) {
+    private UnitReference createUnitReference(final UoM uom) {
+        final UnitReference unitReference = UnitReference.Factory.newInstance(getXmlOptions());
+        if (!uom.isSetLink() && (uom.getUom().startsWith(URN) || uom.getUom().startsWith(HTTP))) {
+            unitReference.setHref(uom.getUom());
+        } else {
+            unitReference.setCode(uom.getUom());
+        }
+        if (uom.isSetName()) {
+            unitReference.setTitle(uom.getName());
+        }
+        if (uom.isSetLink()) {
+            unitReference.setHref(uom.getLink());
+        }
+        return unitReference;
+    }
+
+    private UnitReference createUnitReference(final String uom) {
+        final UnitReference unitReference = UnitReference.Factory.newInstance(getXmlOptions());
+        if (uom.startsWith(URN) || uom.startsWith(HTTP)) {
             unitReference.setHref(uom);
         } else {
             unitReference.setCode(uom);
         }
         return unitReference;
+    }
+
+    private AllowedValuesPropertyType createConstraint(AllowedValuesPropertyType avpt,
+            Referenceable<SweAllowedValues> constraint) {
+        if (constraint.isInstance()) {
+            createAllowedValues(avpt.addNewAllowedValues(), constraint.getInstance());
+        } else if (constraint.isReference()) {
+            org.n52.shetland.w3c.xlink.Reference ref = constraint.getReference();
+            if (ref.getHref().isPresent()) {
+                avpt.setHref(ref.getHref().get().toString());
+            }
+            if (ref.getTitle().isPresent()) {
+                avpt.setTitle(ref.getTitle().get());
+            }
+            if (ref.getActuate().isPresent()) {
+                avpt.setActuate(ActuateType.Enum.forString(ref.getActuate().get()));
+            }
+            if (ref.getArcrole().isPresent()) {
+                avpt.setArcrole(ref.getArcrole().get());
+            }
+            if (ref.getRole().isPresent()) {
+                avpt.setRole(ref.getRole().get());
+            }
+            if (ref.getShow().isPresent()) {
+                avpt.setShow(ShowType.Enum.forString(ref.getShow().get()));
+            }
+            if (ref.getType().isPresent()) {
+                avpt.setType(TypeType.Enum.forString(ref.getType().get()));
+            }
+        }
+        return avpt;
+    }
+
+    private AllowedTimesPropertyType createConstraint(AllowedTimesPropertyType atpt,
+            Referenceable<SweAllowedTimes> constraint) {
+        if (constraint.isInstance()) {
+            createAllowedTimes(atpt.addNewAllowedTimes(), constraint.getInstance());
+        } else if (constraint.isReference()) {
+            org.n52.shetland.w3c.xlink.Reference ref = constraint.getReference();
+            if (ref.getHref().isPresent()) {
+                atpt.setHref(ref.getHref().get().toString());
+            }
+            if (ref.getTitle().isPresent()) {
+                atpt.setTitle(ref.getTitle().get());
+            }
+            if (ref.getActuate().isPresent()) {
+                atpt.setActuate(ActuateType.Enum.forString(ref.getActuate().get()));
+            }
+            if (ref.getArcrole().isPresent()) {
+                atpt.setArcrole(ref.getArcrole().get());
+            }
+            if (ref.getRole().isPresent()) {
+                atpt.setRole(ref.getRole().get());
+            }
+            if (ref.getShow().isPresent()) {
+                atpt.setShow(ShowType.Enum.forString(ref.getShow().get()));
+            }
+            if (ref.getType().isPresent()) {
+                atpt.setType(TypeType.Enum.forString(ref.getType().get()));
+            }
+        }
+        return atpt;
+    }
+
+    private AllowedTokensPropertyType createConstraint(AllowedTokensPropertyType atpt,
+            Referenceable<SweAllowedTokens> constraint) {
+        if (constraint.isInstance()) {
+            createAllowedTokens(atpt.addNewAllowedTokens(), constraint.getInstance());
+        } else if (constraint.isReference()) {
+            org.n52.shetland.w3c.xlink.Reference ref = constraint.getReference();
+            if (ref.getHref().isPresent()) {
+                atpt.setHref(ref.getHref().get().toString());
+            }
+            if (ref.getTitle().isPresent()) {
+                atpt.setTitle(ref.getTitle().get());
+            }
+            if (ref.getActuate().isPresent()) {
+                atpt.setActuate(ActuateType.Enum.forString(ref.getActuate().get()));
+            }
+            if (ref.getArcrole().isPresent()) {
+                atpt.setArcrole(ref.getArcrole().get());
+            }
+            if (ref.getRole().isPresent()) {
+                atpt.setRole(ref.getRole().get());
+            }
+            if (ref.getShow().isPresent()) {
+                atpt.setShow(ShowType.Enum.forString(ref.getShow().get()));
+            }
+            if (ref.getType().isPresent()) {
+                atpt.setType(TypeType.Enum.forString(ref.getType().get()));
+            }
+        }
+        return atpt;
+    }
+
+    private AllowedValuesType createAllowedValues(AllowedValuesType avt, Nillable<SweAllowedValues> instance) {
+        if (instance.isPresent()) {
+            if (instance.get().isSetGmlID()) {
+                avt.setId(instance.get().getGmlId());
+            }
+            if (instance.get().isSetValue()) {
+                for (Double value : instance.get().getValue()) {
+                    avt.addNewValue().setDoubleValue(value);
+                }
+            }
+            if (instance.get().isSetInterval()) {
+                for (RangeValue<Double> interval : instance.get().getInterval()) {
+                    avt.addInterval(interval.getRangeAsList());
+                }
+            }
+            if (instance.get().isSetSignificantFigures()) {
+                avt.setSignificantFigures(instance.get().getSignificantFigures());
+            }
+        }
+        return avt;
+    }
+
+    private AllowedTokensType createAllowedTokens(AllowedTokensType att, Nillable<SweAllowedTokens> instance) {
+        if (instance.isPresent()) {
+            if (instance.get().isSetGmlID()) {
+                att.setId(instance.get().getGmlId());
+            }
+            if (instance.get().isSetValue()) {
+                for (String value : instance.get().getValue()) {
+                    att.addNewValue().setStringValue(value);
+                }
+            }
+            if (instance.get().isSetPattern()) {
+                att.setPattern(instance.get().getPattern());
+            }
+        }
+        return att;
+    }
+
+    private AllowedTimesType createAllowedTimes(AllowedTimesType att, Nillable<SweAllowedTimes> instance) {
+        if (instance.isPresent()) {
+            if (instance.get().isSetGmlID()) {
+                att.setId(instance.get().getGmlId());
+            }
+            if (instance.get().isSetValue()) {
+                for (DateTime value : instance.get().getValue()) {
+                    att.addNewValue().setStringValue(DateTimeHelper.formatDateTime2IsoString(value));
+                }
+            }
+            if (instance.get().isSetInterval()) {
+                for (RangeValue<DateTime> interval : instance.get().getInterval()) {
+                    List<String> list = Lists.newArrayListWithCapacity(2);
+                    list.add(DateTimeHelper.formatDateTime2IsoString(interval.getRangeStart()));
+                    if (interval.isSetEndValue()) {
+                        list.add(DateTimeHelper.formatDateTime2IsoString(interval.getRangeEnd()));
+                    }
+                    att.addInterval(list);
+                }
+            }
+            if (instance.get().isSetSignificantFigures()) {
+                att.setSignificantFigures(instance.get().getSignificantFigures());
+            }
+        }
+        return att;
+    }
+
+    private QualityPropertyType[] createQuality(final Collection<SweQuality> quality)
+            throws EncodingException {
+        if (!quality.isEmpty()) {
+            final ArrayList<QualityPropertyType> xbQualities = Lists.newArrayListWithCapacity(quality.size());
+            for (final SweQuality sweQuality : quality) {
+                final QualityPropertyType xbQuality = QualityPropertyType.Factory.newInstance();
+                if (sweQuality instanceof SweText) {
+                    xbQuality.addNewText().set(((SweText) sweQuality).accept(new SweDataComponentVisitorImpl()));
+                } else if (sweQuality instanceof SweCategory) {
+                    xbQuality.addNewCategory()
+                            .set(((SweCategory) sweQuality).accept(new SweDataComponentVisitorImpl()));
+                } else if (sweQuality instanceof SweQuantity) {
+                    xbQuality.addNewQuantity()
+                            .set(((SweQuantity) sweQuality).accept(new SweDataComponentVisitorImpl()));
+                } else if (sweQuality instanceof SweQuantityRange) {
+                    xbQuality.addNewQuantityRange()
+                            .set(((SweQuantityRange) sweQuality).accept(new SweDataComponentVisitorImpl()));
+                }
+                xbQualities.add(xbQuality);
+            }
+            return xbQualities.toArray(new QualityPropertyType[xbQualities.size()]);
+        }
+        final QualityPropertyType[] result = { QualityPropertyType.Factory.newInstance() };
+        return result;
     }
 
     private UnitReference createUnknownUnitReference() {
@@ -744,4 +694,345 @@ public class SweCommonEncoderv20 extends AbstractXmlEncoder<XmlObject, Object> i
         return unitReference;
     }
 
+    public class SweDataComponentVisitorImpl
+            implements SweDataComponentVisitor<AbstractDataComponentType, EncodingException> {
+        @Override
+        public AbstractDataComponentType visit(SweField component)
+                throws EncodingException {
+            return unsupported(component);
+        }
+
+        @Override
+        public AbstractDataComponentType visit(SweDataRecord component)
+                throws EncodingException {
+            List<SweField> sosFields = component.getFields();
+            DataRecordType xbDataRecord = DataRecordType.Factory.newInstance(getXmlOptions());
+            if (sosFields == null) {
+                LOGGER.error(DATA_RECORD_HAS_NO_FIELDS);
+            } else {
+                List<Field> xbFields = new ArrayList<>(sosFields.size());
+                for (SweField sosSweField : sosFields) {
+                    if (sosSweField == null) {
+                        LOGGER.error(DATA_RECORD_FIELD_IS_NULL);
+                    } else {
+                        xbFields.add(createField(sosSweField));
+                    }
+                }
+                xbDataRecord.setFieldArray(xbFields.toArray(new Field[xbFields.size()]));
+            }
+            return xbDataRecord;
+        }
+
+        @Override
+        public AbstractDataComponentType visit(SweDataArray component)
+                throws EncodingException {
+            if (component == null) {
+                return null;
+            }
+            if (component.isSetXml()) {
+                try {
+                    XmlObject parse = XmlObject.Factory.parse(component.getXml());
+                    if (parse instanceof DataArrayType) {
+                        return (DataArrayType) parse;
+                    } else if (parse instanceof DataArrayDocument) {
+                        return ((DataArrayDocument) parse).getDataArray1();
+                    }
+                } catch (XmlException e) {
+                    LOGGER.warn("Error while parsing XML representation of DataArray^", e);
+                }
+            }
+            DataArrayType xmlDataArray = DataArrayType.Factory.newInstance(getXmlOptions());
+            if (component.isSetElementCount()) {
+                CountType xbCount = CountType.Factory.newInstance(getXmlOptions());
+                if (component.getElementCount().isSetValue()) {
+                    xbCount.setValue(new BigInteger(Integer.toString(component.getElementCount().getValue())));
+                }
+                xmlDataArray.addNewElementCount().setCount(xbCount);
+            } else {
+                xmlDataArray.addNewElementCount().addNewCount();
+            }
+            if (component.isSetElementTyp()) {
+                DataArrayType.ElementType elementType = xmlDataArray.addNewElementType();
+                if (component.getElementType().isSetDefinition()) {
+                    elementType.setName(component.getElementType().getDefinition());
+                } else {
+                    elementType.setName(SweCommonEncoderv20.DEFAULT_ELEMENT_TYPE_NAME);
+                }
+                List<SweField> sosFields = ((SweDataRecord) component.getElementType()).getFields();
+                DataRecordType xbDataRecord = DataRecordType.Factory.newInstance(getXmlOptions());
+                if (sosFields == null) {
+                    LOGGER.error(DATA_RECORD_HAS_NO_FIELDS);
+                } else {
+                    List<Field> xbFields = new ArrayList<>(sosFields.size());
+                    for (SweField sosSweField : sosFields) {
+                        if (sosSweField == null) {
+                            LOGGER.error(DATA_RECORD_FIELD_IS_NULL);
+                        } else {
+                            xbFields.add(createField(sosSweField));
+                        }
+                    }
+                    xbDataRecord.setFieldArray(xbFields.toArray(new Field[xbFields.size()]));
+                }
+                elementType.addNewAbstractDataComponent().set(xbDataRecord);
+                elementType.getAbstractDataComponent().substitute(SweConstants.QN_DATA_RECORD_SWE_200,
+                        DataRecordType.type);
+            }
+            if (component.isSetEncoding()) {
+                Encoding xbEncoding = xmlDataArray.addNewEncoding();
+                xbEncoding.setAbstractEncoding(createAbstractEncoding(component.getEncoding()));
+                xbEncoding.getAbstractEncoding().substitute(SweConstants.QN_TEXT_ENCODING_SWE_200,
+                        TextEncodingType.type);
+            }
+            if (component.isSetValues()) {
+                xmlDataArray.addNewValues().set(createValues(component.getValues(), component.getEncoding()));
+            }
+            return xmlDataArray;
+        }
+
+        @Override
+        public AbstractDataComponentType visit(SweCount component)
+                throws EncodingException {
+            CountType xml = CountType.Factory.newInstance(getXmlOptions());
+            if (component.isSetValue()) {
+                xml.setValue(new BigInteger(Integer.toString(component.getValue())));
+            }
+            if (component.isSetContstraint()) {
+                createConstraint(xml.addNewConstraint(), component.getConstraint());
+            }
+            return xml;
+        }
+
+        @Override
+        public AbstractDataComponentType visit(SweCountRange component)
+                throws EncodingException {
+            CountRangeType xml = CountRangeType.Factory.newInstance(getXmlOptions());
+            if (component.isSetValue()) {
+                xml.setValue(component.getValue().getRangeAsList());
+            }
+            if (component.isSetContstraint()) {
+                createConstraint(xml.addNewConstraint(), component.getConstraint());
+            }
+            return xml;
+        }
+
+        @Override
+        public AbstractDataComponentType visit(SweBoolean component)
+                throws EncodingException {
+            BooleanType xbBoolean = BooleanType.Factory.newInstance(getXmlOptions());
+            if (component.isSetValue()) {
+                xbBoolean.setValue(component.getValue());
+            }
+            return xbBoolean;
+        }
+
+        @Override
+        public AbstractDataComponentType visit(SweCategory component)
+                throws EncodingException {
+            CategoryType xml = CategoryType.Factory.newInstance(getXmlOptions());
+            if (component.getCodeSpace() != null) {
+                xml.addNewCodeSpace().setHref(component.getCodeSpace());
+            }
+            if (component.isSetValue()) {
+                xml.setValue(component.getValue());
+            }
+            if (component.isSetContstraint()) {
+                createConstraint(xml.addNewConstraint(), component.getConstraint());
+            }
+            return xml;
+        }
+
+        @Override
+        public AbstractDataComponentType visit(SweCategoryRange component)
+                throws EncodingException {
+            CategoryRangeType xml = CategoryRangeType.Factory.newInstance(getXmlOptions());
+            if (component.isSetUom()) {
+                xml.addNewCodeSpace().setHref(component.getUom());
+            }
+            if (component.isSetValue()) {
+                xml.setValue(component.getValue().getRangeAsList());
+            }
+            if (component.isSetContstraint()) {
+                createConstraint(xml.addNewConstraint(), component.getConstraint());
+            }
+            return xml;
+        }
+
+        @Override
+        public AbstractDataComponentType visit(SweObservableProperty component)
+                throws EncodingException {
+            return unsupported(component);
+        }
+
+        @Override
+        public AbstractDataComponentType visit(SweQuantity component)
+                throws EncodingException {
+            QuantityType xml = QuantityType.Factory.newInstance(getXmlOptions());
+            if (component.isSetAxisID()) {
+                xml.setAxisID(component.getAxisID());
+            }
+            if (component.isSetValue()) {
+                xml.setValue(component.getValue());
+            }
+            if (component.isSetUom()) {
+                xml.setUom(createUnitReference(component.getUomObject()));
+            } else {
+                xml.setUom(createUnknownUnitReference());
+            }
+            if (component.getQuality() != null) {
+                // TODO implement
+                LOGGER.warn(QUALITY_NOT_SUPPORTED, xml.schemaType());
+            }
+            if (component.isSetContstraint()) {
+                createConstraint(xml.addNewConstraint(), component.getConstraint());
+            }
+            return xml;
+        }
+
+        @Override
+        public AbstractDataComponentType visit(SweQuantityRange component)
+                throws EncodingException {
+            QuantityRangeType xml = QuantityRangeType.Factory.newInstance(getXmlOptions());
+            if (component.isSetAxisID()) {
+                xml.setAxisID(component.getAxisID());
+            }
+            if (component.isSetValue()) {
+                xml.setValue(component.getValue().getRangeAsList());
+            }
+            if (component.isSetUom()) {
+                xml.setUom(createUnitReference(component.getUom()));
+            } else {
+                xml.setUom(createUnknownUnitReference());
+            }
+            if (component.isSetQuality()) {
+                // TODO implement
+                LOGGER.warn(QUALITY_NOT_SUPPORTED, xml.schemaType());
+            }
+            if (component.isSetContstraint()) {
+                createConstraint(xml.addNewConstraint(), component.getConstraint());
+            }
+            return xml;
+        }
+
+        @Override
+        public AbstractDataComponentType visit(SweText component)
+                throws EncodingException {
+            TextType xml = TextType.Factory.newInstance(getXmlOptions());
+            if (component.isSetValue()) {
+                xml.setValue(component.getValue());
+            }
+            if (component.isSetContstraint()) {
+                createConstraint(xml.addNewConstraint(), component.getConstraint());
+            }
+            return xml;
+        }
+
+        @Override
+        public AbstractDataComponentType visit(SweTime component)
+                throws EncodingException {
+            TimeType xml = TimeType.Factory.newInstance(getXmlOptions());
+            if (component.isSetValue()) {
+                xml.setValue(component.getValue());
+            }
+            if (component.isSetUom()) {
+                xml.setUom(createUnitReference(component.getUom()));
+            }
+            if (component.getQuality() != null) {
+                // TODO implement
+                LOGGER.warn(QUALITY_NOT_SUPPORTED, xml.schemaType());
+            }
+            if (component.isSetContstraint()) {
+                createConstraint(xml.addNewConstraint(), component.getConstraint());
+            }
+            return xml;
+        }
+
+        @Override
+        public AbstractDataComponentType visit(SweTimeRange component)
+                throws EncodingException {
+            TimeRangeType xml = TimeRangeType.Factory.newInstance(getXmlOptions());
+            if (component.isSetUom()) {
+                xml.addNewUom().setHref(component.getUom());
+            }
+            if (component.isSetValue()) {
+                xml.setValue(component.getValue().getRangeAsStringList());
+            }
+            if (component.isSetQuality()) {
+                xml.setQualityArray(createQuality(component.getQuality()));
+            }
+            if (component.isSetContstraint()) {
+                createConstraint(xml.addNewConstraint(), component.getConstraint());
+            }
+            return xml;
+        }
+
+        @Override
+        public AbstractDataComponentType visit(SweEnvelope component)
+                throws EncodingException {
+            return unsupported(component);
+        }
+
+        @Override
+        public AbstractDataComponentType visit(SweVector component)
+                throws EncodingException {
+            VectorType xbVector = VectorType.Factory.newInstance(getXmlOptions());
+            if (component.isSetReferenceFrame()) {
+                xbVector.setReferenceFrame(component.getReferenceFrame());
+            }
+            if (component.isSetLocalFrame()) {
+                xbVector.setLocalFrame(component.getLocalFrame());
+            }
+            if (component.isSetCoordinates()) {
+                for (SweCoordinate<?> coordinate : component.getCoordinates()) {
+                    xbVector.addNewCoordinate().set(createCoordinate(coordinate));
+                }
+            }
+            return xbVector;
+        }
+
+        @Override
+        public AbstractDataComponentType visit(SweSimpleDataRecord component)
+                throws EncodingException {
+            return unsupported(component);
+        }
+
+        @Override
+        public AbstractDataComponentType visit(SmlPosition component)
+                throws EncodingException {
+            return unsupported(component);
+        }
+
+        @Override
+        public AbstractDataComponentType visit(SmlDataInterface component)
+                throws EncodingException {
+            return unsupported(component);
+        }
+
+        @Override
+        public AbstractDataComponentType visit(SmlFeatureOfInterest component)
+                throws EncodingException {
+            return unsupported(component);
+        }
+
+        @Override
+        public AbstractDataComponentType visit(StreamingSweDataArray component)
+                throws EncodingException {
+            return unsupported(component);
+        }
+
+        @SuppressFBWarnings("VA_FORMAT_STRING_USES_NEWLINE")
+        private AbstractDataComponentType unsupported(SweAbstractDataComponent component)
+                throws EncodingException {
+            String xml = component.getXml();
+            if (!Strings.isNullOrEmpty(xml)) {
+                try {
+                    return (AbstractDataComponentType) XmlObject.Factory.parse(xml, getXmlOptions());
+                } catch (XmlException ex) {
+                    String message = String.format("Error while decoding %s:\n%s",
+                            SweAbstractDataComponent.class.getName(), xml);
+                    throw new EncodingException(ex, message);
+                }
+            }
+            throw new NotYetSupportedEncodingException(SweAbstractDataComponent.class.getName(), component);
+        }
+    }
 }

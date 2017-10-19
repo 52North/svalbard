@@ -21,11 +21,13 @@ import java.io.UnsupportedEncodingException;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import javax.xml.stream.XMLStreamException;
 
 import org.apache.xmlbeans.XmlException;
 import org.apache.xmlbeans.XmlObject;
+import org.apache.xmlbeans.XmlOptions;
 
 import org.n52.janmayen.http.MediaType;
 import org.n52.janmayen.http.MediaTypes;
@@ -50,7 +52,7 @@ import com.google.common.collect.Sets;
  * XML encoder class for the INSPIRE schema
  *
  * @author <a href="mailto:c.hollmann@52north.org">Carsten Hollmann</a>
- * @since 4.1.0
+ * @since 1.0.0
  *
  */
 public class InspireXmlEncoder extends AbstractXmlEncoder<XmlObject, Object> {
@@ -74,24 +76,26 @@ public class InspireXmlEncoder extends AbstractXmlEncoder<XmlObject, Object> {
     }
 
     @Override
-    public XmlObject encode(Object objectToEncode, EncodingContext additionalValues)
+    public XmlObject encode(Object objectToEncode, EncodingContext ctx)
             throws EncodingException {
         if (objectToEncode instanceof InspireObject) {
-            return encodeObject((InspireObject)objectToEncode);
+            return encodeObject((InspireObject) objectToEncode, ctx);
         } else if (objectToEncode instanceof SwesExtension<?>) {
-            SwesExtension<?> swesExtension = (SwesExtension<?>)objectToEncode;
+            SwesExtension<?> swesExtension = (SwesExtension<?>) objectToEncode;
             if (swesExtension.getValue() instanceof InspireObject) {
-                return encodeObject((InspireObject)swesExtension.getValue());
+                return encodeObject((InspireObject) swesExtension.getValue(), ctx);
             }
         }
-       throw new UnsupportedEncoderInputException(this, objectToEncode);
+        throw new UnsupportedEncoderInputException(this, objectToEncode);
     }
 
-    private XmlObject encodeObject(InspireObject objectToEncode) throws EncodingException {
+    private XmlObject encodeObject(InspireObject objectToEncode, EncodingContext ctx) throws EncodingException {
         try {
             checkIfSupported(objectToEncode);
             ByteArrayOutputStream out = new ByteArrayOutputStream();
-            new InspireXmlStreamWriter(objectToEncode).write(out);
+            EncodingContext context = ctx.with(EncoderFlags.ENCODER_REPOSITORY, getEncoderRepository())
+                    .with(XmlEncoderFlags.XML_OPTIONS, (Supplier<XmlOptions>) this::getXmlOptions);
+            new InspireXmlStreamWriter(context, out, objectToEncode).write();
             String s = out.toString("UTF8");
             return XmlObject.Factory.parse(s);
         } catch (XMLStreamException | DateTimeFormatException | XmlException | UnsupportedEncodingException ex) {
@@ -100,10 +104,10 @@ public class InspireXmlEncoder extends AbstractXmlEncoder<XmlObject, Object> {
     }
 
     private void checkIfSupported(InspireObject objectToEncode) throws EncodingException {
-        if (!(objectToEncode instanceof InspireSupportedLanguages)
-         && !(objectToEncode instanceof InspireSupportedCRS)
-         && !(objectToEncode instanceof FullInspireExtendedCapabilities)
-         && !(objectToEncode instanceof MinimalInspireExtendedCapabilities)) {
+        if (!(objectToEncode instanceof InspireSupportedLanguages) &&
+            !(objectToEncode instanceof InspireSupportedCRS) &&
+            !(objectToEncode instanceof FullInspireExtendedCapabilities) &&
+            !(objectToEncode instanceof MinimalInspireExtendedCapabilities)) {
             throw new UnsupportedEncoderInputException(this, objectToEncode);
         }
     }
@@ -541,5 +545,4 @@ public class InspireXmlEncoder extends AbstractXmlEncoder<XmlObject, Object> {
     // languageElementISO6392B.setLanguage(sosLanguage.value());
     // return languageElementISO6392B;
     // }
-
 }

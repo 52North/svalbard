@@ -22,6 +22,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -36,6 +37,7 @@ import net.opengis.sos.x20.ContentsType;
 import net.opengis.sos.x20.ObservationOfferingPropertyType;
 import net.opengis.sos.x20.ObservationOfferingType;
 import net.opengis.swes.x20.AbstractContentsType;
+import net.opengis.swes.x20.AbstractOfferingType.RelatedFeature;
 
 import org.apache.xmlbeans.XmlException;
 import org.apache.xmlbeans.XmlObject;
@@ -106,14 +108,11 @@ public class CapabilitiesTypeDecoder extends
     }
 
     private Collection<SosObservationOffering> parseContents(ContentsType contents) {
-        AbstractContentsType.Offering[] offeringArray = contents.getOfferingArray();
-        Optional<AbstractContentsType.Offering[]> optional = Optional.ofNullable(offeringArray);
-        Optional<Stream<AbstractContentsType.Offering>> stream = optional.map(Arrays::stream);
-        Stream<AbstractContentsType.Offering> orElseGet = stream.orElseGet(Stream::empty);
-        Stream<SosObservationOffering> map = orElseGet.map(this::parseOffering);
-        Stream<SosObservationOffering> filter = map.filter(Objects::nonNull);
-        Set<SosObservationOffering> collect = filter.collect(toSet());
-        return collect;
+        return Optional.ofNullable(contents.getOfferingArray())
+                .map(Arrays::stream).orElseGet(Stream::empty)
+                .map(this::parseOffering)
+                .filter(Objects::nonNull)
+                .collect(toSet());
     }
 
     private SosObservationOffering parseOffering(AbstractContentsType.Offering offering) {
@@ -140,6 +139,20 @@ public class CapabilitiesTypeDecoder extends
             }
         }
         return observationOffering;
+    }
+
+    private SosOffering parseOffering(ObservationOfferingType obsOffPropType) throws DecodingException {
+        String offeringId;
+        if (obsOffPropType.getIdentifier() != null) {
+            offeringId = obsOffPropType.getIdentifier();
+        } else {
+            offeringId = obsOffPropType.getId();
+        }
+        if (obsOffPropType.getNameArray() != null && obsOffPropType.getNameArray().length > 0) {
+            CodeType codeType = decodeXmlElement(obsOffPropType.getNameArray(0));
+            return new SosOffering(offeringId, codeType);
+        }
+        return new SosOffering(offeringId, "");
     }
 
     private FilterCapabilities parseFilterCapabilities(CapabilitiesType.FilterCapabilities filterCapabilities) {
@@ -190,7 +203,7 @@ public class CapabilitiesTypeDecoder extends
         Extensions extensions = new Extensions();
         for (XmlObject xmlObject : obsOff.getExtensionArray()) {
             try {
-                Extension extension = (Extension) decodeXmlElement(xmlObject);
+                Extension<?> extension = (Extension) decodeXmlElement(xmlObject);
                 extensions.addExtension(extension);
             } catch (DecodingException ex) {
                 LOGGER.warn(ex.getLocalizedMessage());
@@ -213,8 +226,16 @@ public class CapabilitiesTypeDecoder extends
     }
 
     private Map<String, Set<String>> parseRelatedFeatures(ObservationOfferingType obsOff) {
-        LOGGER.warn("parseRelatedFeatures needs to be implemented");
-        return new HashMap<String, Set<String>>();
+        HashMap<String, Set<String>> map = new HashMap<>(obsOff.getRelatedFeatureArray().length);
+        for (RelatedFeature releatedFeature : obsOff.getRelatedFeatureArray()) {
+            String feature = releatedFeature.getFeatureRelationship().getTarget().getHref();
+            String role = releatedFeature.getFeatureRelationship().getRole();
+            Set<String> roles = map.computeIfAbsent(feature, (key) -> new HashSet<>(1));
+            if (role != null) {
+                roles.add(role);
+            }
+        }
+        return map;
     }
 
     private Time parseResultTime(ObservationOfferingType obsOff) {
@@ -251,18 +272,5 @@ public class CapabilitiesTypeDecoder extends
                 .collect(toSet());
     }
 
-    private SosOffering parseOffering(ObservationOfferingType obsOffPropType) throws DecodingException {
-        String offeringId;
-        if (obsOffPropType.getIdentifier() != null) {
-            offeringId = obsOffPropType.getIdentifier();
-        } else {
-            offeringId = obsOffPropType.getId();
-        }
-        if (obsOffPropType.getNameArray() != null && obsOffPropType.getNameArray().length > 0) {
-            CodeType codeType = decodeXmlElement(obsOffPropType.getNameArray(0));
-            return new SosOffering(offeringId, codeType);
-        }
-        return new SosOffering(offeringId, "");
-    }
 
 }

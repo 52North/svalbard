@@ -65,7 +65,7 @@ import org.n52.svalbard.util.XmlHelper;
 /**
  * @author Shane StClair
  *
- * @since 4.0.0
+ * @since 1.0.0
  */
 public class SensorMLDecoderV101Test {
     private static final String TEST_ID_1 = "test-id-1";

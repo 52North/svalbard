@@ -16,40 +16,36 @@
  */
 package org.n52.svalbard.write;
 
+import java.io.OutputStream;
 import java.util.Optional;
+
+import javax.xml.stream.XMLStreamException;
 
 import org.n52.shetland.ogc.om.OmObservation;
 import org.n52.shetland.ogc.om.features.SfConstants;
+import org.n52.svalbard.encode.EncodingContext;
 
 /**
  * Implementation of {@link AbstractOmV20XmlStreamWriter} to write O&M 2.0
  * encoded {@link OmObservation}s to stream
  *
  * @author <a href="mailto:c.hollmann@52north.org">Carsten Hollmann</a>
- * @since 4.1.0
+ * @since 1.0.0
  *
  */
 public class OmV20XmlStreamWriter extends AbstractOmV20XmlStreamWriter {
-
-    /**
-     * constructor
-     */
-    public OmV20XmlStreamWriter() {
-        super();
-    }
-
-    /**
-     * constructor
-     *
-     * @param observation
-     *            {@link OmObservation} to write to stream
-     */
-    public OmV20XmlStreamWriter(OmObservation observation) {
-        super(observation);
+    public OmV20XmlStreamWriter(EncodingContext context, OutputStream outputStream, OmObservation element)
+            throws XMLStreamException {
+        super(context, outputStream, element);
     }
 
     @Override
     protected Optional<String> getDefaultFeatureEncodingNamespace() {
         return Optional.of(SfConstants.NS_SAMS);
+    }
+
+    @Override
+    protected void writeAddtitionalNamespaces() throws XMLStreamException {
+        // nothig to add
     }
 }

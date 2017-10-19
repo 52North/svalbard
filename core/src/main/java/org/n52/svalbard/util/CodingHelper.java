@@ -16,6 +16,9 @@
  */
 package org.n52.svalbard.util;
 
+import static java.util.stream.Collectors.toSet;
+
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -25,11 +28,13 @@ import org.apache.xmlbeans.XmlObject;
 import org.n52.janmayen.http.MediaTypes;
 import org.n52.svalbard.decode.DecoderKey;
 import org.n52.svalbard.decode.OperationDecoderKey;
-import org.n52.svalbard.decode.exception.XmlDecodingException;
-import org.n52.svalbard.encode.EncoderKey;
-import org.n52.svalbard.encode.XmlEncoderKey;
 import org.n52.svalbard.decode.XmlNamespaceDecoderKey;
 import org.n52.svalbard.decode.XmlStringOperationDecoderKey;
+import org.n52.svalbard.decode.exception.XmlDecodingException;
+import org.n52.svalbard.encode.EncoderKey;
+import org.n52.svalbard.encode.XmlDocumentEncoderKey;
+import org.n52.svalbard.encode.XmlEncoderKey;
+import org.n52.svalbard.encode.XmlPropertyTypeEncoderKey;
 
 /**
  * TODO implement encodeToXml(Object o) using a Map from o.getClass().getName()
@@ -37,7 +42,7 @@ import org.n52.svalbard.decode.XmlStringOperationDecoderKey;
  *
  * @author <a href="mailto:c.autermann@52north.org">Christian Autermann</a>
  *
- * @since 4.0.0
+ * @since 1.0.0
  *
  */
 public final class CodingHelper {
@@ -46,16 +51,16 @@ public final class CodingHelper {
     }
 
     public static Set<DecoderKey> decoderKeysForElements(String namespace, Class<?>... elements) {
-        final HashSet<DecoderKey> keys = new HashSet<>(elements.length);
-        for (final Class<?> x : elements) {
+        HashSet<DecoderKey> keys = new HashSet<>(elements.length);
+        for (Class<?> x : elements) {
             keys.add(new XmlNamespaceDecoderKey(namespace, x));
         }
         return keys;
     }
 
     public static Set<DecoderKey> xmlDecoderKeysForOperation(String service, String version, Enum<?>... operations) {
-        final HashSet<DecoderKey> set = new HashSet<>(operations.length);
-        for (final Enum<?> o : operations) {
+        HashSet<DecoderKey> set = new HashSet<>(operations.length);
+        for (Enum<?> o : operations) {
             set.add(new OperationDecoderKey(service, version, o.name(), MediaTypes.TEXT_XML));
             set.add(new OperationDecoderKey(service, version, o.name(), MediaTypes.APPLICATION_XML));
         }
@@ -73,8 +78,8 @@ public final class CodingHelper {
 
     public static Set<DecoderKey> xmlStringDecoderKeysForOperationAndMediaType(String service, String version,
             Enum<?>... operations) {
-        final HashSet<DecoderKey> set = new HashSet<>(operations.length);
-        for (final Enum<?> o : operations) {
+        HashSet<DecoderKey> set = new HashSet<>(operations.length);
+        for (Enum<?> o : operations) {
             set.add(new XmlStringOperationDecoderKey(service, version, o, MediaTypes.TEXT_XML));
             set.add(new XmlStringOperationDecoderKey(service, version, o, MediaTypes.APPLICATION_XML));
         }
@@ -91,23 +96,27 @@ public final class CodingHelper {
         return set;
     }
 
-    public static Set<EncoderKey> encoderKeysForElements(final String namespace, final Class<?>... elements) {
-        final HashSet<EncoderKey> keys = new HashSet<>(elements.length);
-        for (final Class<?> x : elements) {
-            keys.add(new XmlEncoderKey(namespace, x));
-        }
-        return keys;
+    public static Set<EncoderKey> encoderKeysForElements(String namespace, Class<?>... elements) {
+        return Arrays.stream(elements).map(x -> new XmlEncoderKey(namespace, x)).collect(toSet());
     }
 
     public static EncoderKey getEncoderKey(String namespace, Object o) {
         return new XmlEncoderKey(namespace, o.getClass());
     }
 
+    public static EncoderKey getPropertyTypeEncoderKey(final String namespace, final Object o) {
+        return new XmlPropertyTypeEncoderKey(namespace, o.getClass());
+    }
+
+    public static EncoderKey getDocumentEncoderKey(final String namespace, final Object o) {
+        return new XmlDocumentEncoderKey(namespace, o.getClass());
+    }
+
     public static DecoderKey getDecoderKey(final XmlObject doc) {
         return new XmlNamespaceDecoderKey(XmlHelper.getNamespace(doc), doc.getClass());
     }
 
-    public static <T extends XmlObject> DecoderKey getDecoderKey(final T[] doc) {
+    public static <T extends XmlObject> DecoderKey getDecoderKey(T[] doc) {
         return new XmlNamespaceDecoderKey(XmlHelper.getNamespace(doc[0]), doc.getClass());
     }
 

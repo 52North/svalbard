@@ -19,7 +19,6 @@ package org.n52.svalbard.encode;
 import java.util.Set;
 
 import org.apache.xmlbeans.XmlObject;
-
 import org.n52.shetland.ogc.sos.Sos2Constants;
 import org.n52.shetland.ogc.sos.response.InsertSensorResponse;
 import org.n52.shetland.ogc.swes.SwesConstants;
@@ -36,7 +35,7 @@ import net.opengis.swes.x20.InsertSensorResponseType;
  *
  * @author <a href="mailto:c.autermann@52north.org">Christian Autermann</a>
  *
- * @since 4.0.0
+ * @since 1.0.0
  */
 public class InsertSensorResponseEncoder extends AbstractSwesResponseEncoder<InsertSensorResponse> {
 

@@ -52,7 +52,7 @@ import org.n52.shetland.ogc.gml.time.TimeInstant;
 import org.n52.shetland.ogc.gml.time.TimePeriod;
 import org.n52.shetland.ogc.gml.time.TimePosition;
 import org.n52.shetland.util.CollectionHelper;
-import org.n52.svalbard.encode.EncodingValues;
+import org.n52.svalbard.encode.EncodingContext;
 import org.n52.svalbard.encode.exception.EncodingException;
 
 import com.google.common.html.HtmlEscapers;
@@ -61,72 +61,30 @@ import com.google.common.html.HtmlEscapers;
  * XML stream writer for INSPIRE DLS ExtendedCapabilities
  *
  * @author <a href="mailto:c.hollmann@52north.org">Carsten Hollmann</a>
- * @since 4.1.0
+ * @since 1.0.0
  *
  */
 public class InspireXmlStreamWriter extends XmlStreamWriter<InspireObject> implements InspireConstants {
-
-    private InspireObject inspireObject;
-
-    /**
-     * constructor
-     *
-     * @param inspireObject
-     *            SOS internal representation of the INSPIRE object to encode
-     */
-    public InspireXmlStreamWriter(InspireObject inspireObject) {
-        this.setInspireObject(inspireObject);
+    public InspireXmlStreamWriter(
+            EncodingContext context,
+            OutputStream outputStream,
+            InspireObject element)
+            throws XMLStreamException {
+        super(context, outputStream, element);
     }
 
     @Override
-    public void write(OutputStream out) throws XMLStreamException, EncodingException {
-        init(out);
-        if (getInspireObject() instanceof FullInspireExtendedCapabilities) {
-            writeFullInspireExtendedCapabilities((FullInspireExtendedCapabilities) getInspireObject());
-        } else if (getInspireObject() instanceof MinimalInspireExtendedCapabilities) {
-            writeMinimlaInspireExtendedCapabilities((MinimalInspireExtendedCapabilities) getInspireObject());
-        } else if (getInspireObject() instanceof InspireSupportedLanguages) {
-            writeSupportedLanguages((InspireSupportedLanguages) getInspireObject(), true);
-        } else if (getInspireObject() instanceof InspireSupportedCRS) {
-            writeSupportedCRS((InspireSupportedCRS) getInspireObject(), true);
+    public void write() throws XMLStreamException, EncodingException {
+        if (getElement() instanceof FullInspireExtendedCapabilities) {
+            writeFullInspireExtendedCapabilities((FullInspireExtendedCapabilities) getElement());
+        } else if (getElement() instanceof MinimalInspireExtendedCapabilities) {
+            writeMinimlaInspireExtendedCapabilities((MinimalInspireExtendedCapabilities) getElement());
+        } else if (getElement() instanceof InspireSupportedLanguages) {
+            writeSupportedLanguages((InspireSupportedLanguages) getElement(), true);
+        } else if (getElement() instanceof InspireSupportedCRS) {
+            writeSupportedCRS((InspireSupportedCRS) getElement(), true);
         }
         finish();
-    }
-
-    @Override
-    public void write(OutputStream out, EncodingValues encodingValues) throws XMLStreamException, EncodingException {
-      write(out);
-    }
-
-    @Override
-    public void write(InspireObject elementToStream, OutputStream out) throws XMLStreamException, EncodingException {
-        this.inspireObject = elementToStream;
-        write(out);
-    }
-
-    @Override
-    public void write(InspireObject elementToStream, OutputStream out, EncodingValues encodingValues) throws XMLStreamException, EncodingException {
-        this.inspireObject = elementToStream;
-        write(out);
-    }
-
-    /**
-     * Get the INSPIRE DLS ExtendedCapabilities to write
-     *
-     * @return the INSPIRE DLS ExtendedCapabilities to write
-     */
-    private InspireObject getInspireObject() {
-        return inspireObject;
-    }
-
-    /**
-     * Get the INSPIRE object to write
-     *
-     * @param inspireObject
-     *            the INSPIRE object to set
-     */
-    private void setInspireObject(InspireObject inspireObject) {
-        this.inspireObject = inspireObject;
     }
 
     /**
@@ -143,20 +101,14 @@ public class InspireXmlStreamWriter extends XmlStreamWriter<InspireObject> imple
         start(QN_EXTENDED_CAPABILITIES);
         writeInspireCommonNamespaces(true);
         writeInspireDLSNamespaces();
-        writeNewLine();
         writeMetadataUrl(minimalInspireExtendedCapabilities.getMetadataUrl());
-        writeNewLine();
         writeSupportedLanguages(minimalInspireExtendedCapabilities.getSupportedLanguages(), false);
-        writeNewLine();
         writeResponseLanguage(minimalInspireExtendedCapabilities.getResponseLanguage());
-        writeNewLine();
         for (InspireUniqueResourceIdentifier inspireUniqueResourceIdentifier : minimalInspireExtendedCapabilities
                 .getSpatialDataSetIdentifier()) {
             writeSpatialDataSetIdentifier(inspireUniqueResourceIdentifier);
-            writeNewLine();
         }
         writeSupportedCRS(minimalInspireExtendedCapabilities.getSupportedCRS(), false);
-        writeNewLine();
         end(QN_EXTENDED_CAPABILITIES);
     }
 
@@ -174,52 +126,38 @@ public class InspireXmlStreamWriter extends XmlStreamWriter<InspireObject> imple
         start(QN_EXTENDED_CAPABILITIES);
         writeInspireCommonNamespaces(true);
         writeInspireDLSNamespaces();
-        writeNewLine();
         for (InspireResourceLocator resourceLocator : fullInspireExtendedCapabilities.getResourceLocator()) {
             writeResourceLocator(resourceLocator);
-            writeNewLine();
         }
         writeResourceType(fullInspireExtendedCapabilities.getResourceType());
-        writeNewLine();
         writeTemporalReference(fullInspireExtendedCapabilities.getTemporalReferences());
         for (InspireConformity conformity : fullInspireExtendedCapabilities.getConformity()) {
             writeConformity(conformity);
-            writeNewLine();
         }
         for (InspireMetadataPointOfContact metadataPointOfContact : fullInspireExtendedCapabilities
                 .getMetadataPointOfContacts()) {
             writeMetadataPointOfContact(metadataPointOfContact);
-            writeNewLine();
         }
         writeMetadataDate(fullInspireExtendedCapabilities.getMetadataDate());
-        writeNewLine();
         writeSpatialDataServiceType(fullInspireExtendedCapabilities.getSpatialDataServiceType());
-        writeNewLine();
         for (InspireMandatoryKeyword mandatoryKeyword : fullInspireExtendedCapabilities.getMandatoryKeywords()) {
             writeMandatoryKeyword(mandatoryKeyword);
-            writeNewLine();
         }
         if (fullInspireExtendedCapabilities.isSetKeywords()) {
             for (InspireKeyword keyword : fullInspireExtendedCapabilities.getKeywords()) {
                 writeKeyword(keyword);
-                writeNewLine();
             }
         }
         writeSupportedLanguages(fullInspireExtendedCapabilities.getSupportedLanguages(), false);
-        writeNewLine();
         writeResponseLanguage(fullInspireExtendedCapabilities.getResponseLanguage());
-        writeNewLine();
         if (fullInspireExtendedCapabilities.isSetMetadataUrl()) {
             writeMetadataUrl(fullInspireExtendedCapabilities.getMetadataUrl());
-            writeNewLine();
         }
         for (InspireUniqueResourceIdentifier inspireUniqueResourceIdentifier : fullInspireExtendedCapabilities
                 .getSpatialDataSetIdentifier()) {
             writeSpatialDataSetIdentifier(inspireUniqueResourceIdentifier);
-            writeNewLine();
         }
         writeSupportedCRS(fullInspireExtendedCapabilities.getSupportedCRS(), false);
-        writeNewLine();
         end(QN_EXTENDED_CAPABILITIES);
     }
 
@@ -234,17 +172,14 @@ public class InspireXmlStreamWriter extends XmlStreamWriter<InspireObject> imple
     private void writeCitationContent(InspireCitation citation) throws XMLStreamException {
         writeTitle(citation.getTitle());
         writeDateOf(citation.getDateOf());
-        writeNewLine();
         if (citation.isSetUrls()) {
             for (String url : citation.getUrls()) {
                 writeURI(url);
-                writeNewLine();
             }
         }
         if (citation.isSetResourceLocators()) {
             for (InspireResourceLocator resourceLocator : citation.getResourceLocator()) {
                 writeResourceLocator(resourceLocator);
-                writeNewLine();
             }
         }
     }
@@ -273,11 +208,8 @@ public class InspireXmlStreamWriter extends XmlStreamWriter<InspireObject> imple
      */
     private void writeConformity(InspireConformity conformity) throws XMLStreamException {
         start(QN_CONFORMITY);
-        writeNewLine();
         writeSpecification(conformity.getInspireSpecification());
-        writeNewLine();
         writeDegree(conformity.getInspireDegreeOfConformity());
-        writeNewLine();
         end(QN_CONFORMITY);
 
     }
@@ -293,9 +225,7 @@ public class InspireXmlStreamWriter extends XmlStreamWriter<InspireObject> imple
      */
     private void writeDefaultLanguage(InspireLanguageISO6392B defaultLanguage) throws XMLStreamException {
         start(QN_DEFAULT_LANGUAGE);
-        writeNewLine();
         writeLanguage(defaultLanguage);
-        writeNewLine();
         end(QN_DEFAULT_LANGUAGE);
     }
 
@@ -474,7 +404,6 @@ public class InspireXmlStreamWriter extends XmlStreamWriter<InspireObject> imple
         }
         start(QN_KEYWORD);
         writeKeywordValue(keyword.getKeywordValue());
-        writeNewLine();
         end(QN_KEYWORD);
 
     }
@@ -529,9 +458,7 @@ public class InspireXmlStreamWriter extends XmlStreamWriter<InspireObject> imple
      */
     private void writeMandatoryKeyword(InspireMandatoryKeyword mandatoryKeyword) throws XMLStreamException {
         start(QN_MANDATORY_KEYWORD);
-        writeNewLine();
         writeKeywordValue(mandatoryKeyword.getKeywordValue());
-        writeNewLine();
         end(QN_MANDATORY_KEYWORD);
     }
 
@@ -575,11 +502,8 @@ public class InspireXmlStreamWriter extends XmlStreamWriter<InspireObject> imple
     private void writeMetadataPointOfContact(InspireMetadataPointOfContact metadataPointOfContact)
             throws XMLStreamException {
         start(QN_METADATA_POINT_OF_CONTACT);
-        writeNewLine();
         writeOrganisationName(metadataPointOfContact.getOrganisationName());
-        writeNewLine();
         writeEmailAddress(metadataPointOfContact.getEmailAddress());
-        writeNewLine();
         end(QN_METADATA_POINT_OF_CONTACT);
     }
 
@@ -594,7 +518,6 @@ public class InspireXmlStreamWriter extends XmlStreamWriter<InspireObject> imple
      */
     private void writeMetadataUrl(InspireResourceLocator metadataUrl) throws XMLStreamException {
         start(QN_METADATA_URL);
-        writeNewLine();
         writeResourceLocatorContent(metadataUrl);
         end(QN_METADATA_URL);
     }
@@ -655,9 +578,7 @@ public class InspireXmlStreamWriter extends XmlStreamWriter<InspireObject> imple
      */
     private void writeResponseLanguage(InspireLanguageISO6392B responseLanguage) throws XMLStreamException {
         start(QN_RESPONSE_LANGUAGE);
-        writeNewLine();
         writeLanguage(responseLanguage);
-        writeNewLine();
         end(QN_RESPONSE_LANGUAGE);
 
     }
@@ -672,11 +593,9 @@ public class InspireXmlStreamWriter extends XmlStreamWriter<InspireObject> imple
      */
     private void writeResourceLocatorContent(InspireResourceLocator resourceLocator) throws XMLStreamException {
         writeUrl(resourceLocator.getURL());
-        writeNewLine();
         if (resourceLocator.isSetMediaTypes()) {
             for (MediaType mediaType : resourceLocator.getMediaTypes()) {
                 writeMediaType(mediaType);
-                writeNewLine();
             }
         }
     }
@@ -691,11 +610,8 @@ public class InspireXmlStreamWriter extends XmlStreamWriter<InspireObject> imple
      */
     private void writeResourceLocator(InspireResourceLocator resourceLocator) throws XMLStreamException {
         start(QN_RESOURCE_LOCATOR);
-        writeNewLine();
         writeResourceLocatorContent(resourceLocator);
-        indent--;
         end(QN_RESOURCE_LOCATOR);
-        indent++;
     }
 
     /**
@@ -730,11 +646,9 @@ public class InspireXmlStreamWriter extends XmlStreamWriter<InspireObject> imple
         start(QN_SUPPORTED_LANGUAGES);
         writeInspireCommonNamespaces(root);
         writeDefaultLanguage(supportedLanguages.getDefaultLanguage());
-        writeNewLine();
         if (supportedLanguages.isSetSupportedLanguages()) {
             for (InspireLanguageISO6392B supportedLanguage : supportedLanguages.getSupportedLanguages()) {
                 writeSupportedLanguage(supportedLanguage);
-                writeNewLine();
             }
         }
         end(QN_SUPPORTED_LANGUAGES);
@@ -770,9 +684,7 @@ public class InspireXmlStreamWriter extends XmlStreamWriter<InspireObject> imple
     private void writeSpatialDataSetIdentifier(InspireUniqueResourceIdentifier inspireUniqueResourceIdentifier)
             throws XMLStreamException {
         start(QN_SPATIAL_DATASET_IDENTIFIER);
-        writeNewLine();
         writeUniqueResourceIdentifierContent(inspireUniqueResourceIdentifier);
-        writeNewLine();
         endInline(QN_SPATIAL_DATASET_IDENTIFIER);
     }
 
@@ -788,7 +700,6 @@ public class InspireXmlStreamWriter extends XmlStreamWriter<InspireObject> imple
      */
     private void writeSpecification(InspireConformityCitation inspireSpecification) throws XMLStreamException {
         start(QN_SPECIFICATION);
-        writeNewLine();
         writeCitationContent(inspireSpecification);
         end(QN_SPECIFICATION);
     }
@@ -821,9 +732,7 @@ public class InspireXmlStreamWriter extends XmlStreamWriter<InspireObject> imple
      */
     private void writeSupportedLanguage(InspireLanguageISO6392B supportedLanguage) throws XMLStreamException {
         start(QN_SUPPORTED_LANGUAGE);
-        writeNewLine();
         writeLanguage(supportedLanguage);
-        writeNewLine();
         end(QN_SUPPORTED_LANGUAGE);
 
     }
@@ -862,27 +771,21 @@ public class InspireXmlStreamWriter extends XmlStreamWriter<InspireObject> imple
         } else {
             start(QN_TEMPORAL_REFERENCE);
             if (temporalReference.isSetDateOfCreation()) {
-                writeNewLine();
                 writeDateOfCreation(temporalReference.getDateOfCreation());
             }
             if (temporalReference.isSetDateOfLastRevision()) {
-                writeNewLine();
                 writeDateOfLastRevision(temporalReference.getDateOfLastRevision());
             }
             if (temporalReference.isSetDatesOfPublication()) {
                 for (InspireDateOfPublication dateOfPublication : temporalReference.getDatesOfPublication()) {
-                    writeNewLine();
                     writeDateOfPublication(dateOfPublication);
                 }
             }
             if (temporalReference.isSetTemporalExtents()) {
-                writeNewLine();
                 for (Time temporalExtent : temporalReference.getTemporalExtents()) {
-                    writeNewLine();
                     writeTemporalExtent(temporalExtent);
                 }
             }
-            writeNewLine();
             end(QN_TEMPORAL_REFERENCE);
         }
     }
@@ -899,11 +802,9 @@ public class InspireXmlStreamWriter extends XmlStreamWriter<InspireObject> imple
         if (CollectionHelper.isNotEmpty(temporalReferences)) {
             for (InspireTemporalReference temporalReference : temporalReferences) {
                 writeTemporalReference(temporalReference);
-                writeNewLine();
             }
         } else {
             empty(QN_TEMPORAL_REFERENCE);
-            writeNewLine();
         }
     }
 
@@ -934,7 +835,6 @@ public class InspireXmlStreamWriter extends XmlStreamWriter<InspireObject> imple
         // TODO Check if metadataURL and/or Code/Namespace (attr(name, value);)
         writeCode(uniqueResourceIdentifier.getCode());
         if (uniqueResourceIdentifier.isSetNamespace()) {
-            writeNewLine();
             writeNamespace(uniqueResourceIdentifier.getNamespace());
         }
     }
@@ -983,13 +883,10 @@ public class InspireXmlStreamWriter extends XmlStreamWriter<InspireObject> imple
         if (root) {
             writeInspireDLSNamespaces();
         }
-        writeNewLine();
         writeDefaultCRS(supportedCRSes.getDefaultCRS());
-        writeNewLine();
         if (supportedCRSes.isSetSupportedCRSs()) {
             for (String supportedCRS : supportedCRSes.getOtherCRS()) {
                 writeOtherCRS(supportedCRS);
-                writeNewLine();
             }
         }
         end(QN_SUPPORTED_CRS);

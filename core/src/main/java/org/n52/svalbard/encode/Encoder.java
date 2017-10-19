@@ -22,16 +22,13 @@ import java.util.Set;
 import org.n52.janmayen.component.Component;
 import org.n52.janmayen.http.MediaType;
 import org.n52.shetland.ogc.SupportedType;
-import org.n52.svalbard.HelperValues;
 import org.n52.svalbard.encode.exception.EncodingException;
 
 /**
  * Generic interface for Encoders.
  *
- * @param <T>
- *            the resulting type, the "Target"
- * @param <S>
- *            the input type, the "Source"
+ * @param <T> the resulting type, the "Target"
+ * @param <S> the input type, the "Source"
  *
  * @since 1.0.0
  */
@@ -51,7 +48,7 @@ public interface Encoder<T, S> extends Component<EncoderKey> {
     T encode(S objectToEncode) throws EncodingException;
 
     /**
-     * Encodes the specified object with the specified {@linkplain HelperValues}
+     * Encodes the specified object with the specified {@linkplain EncodingContext}
      * .
      *
      * @param objectToEncode

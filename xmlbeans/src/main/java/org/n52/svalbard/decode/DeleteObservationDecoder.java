@@ -16,25 +16,20 @@
  */
 package org.n52.svalbard.decode;
 
-import static java.lang.String.format;
-import static org.n52.shetland.ogc.sos.SosConstants.SOS;
-import static org.n52.shetland.util.CollectionHelper.union;
-import static org.n52.svalbard.util.CodingHelper.decoderKeysForElements;
-import static org.n52.svalbard.util.CodingHelper.xmlDecoderKeysForOperation;
-
 import java.util.Collections;
 import java.util.Set;
 
 import org.apache.xmlbeans.XmlObject;
+import org.n52.shetland.ogc.SupportedType;
+import org.n52.shetland.ogc.sos.Sos2Constants;
+import org.n52.shetland.ogc.sos.delobs.DeleteObservationConstants;
+import org.n52.shetland.ogc.sos.delobs.DeleteObservationRequest;
+import org.n52.shetland.util.CollectionHelper;
+import org.n52.svalbard.decode.exception.DecodingException;
+import org.n52.svalbard.decode.exception.UnsupportedDecoderInputException;
+import org.n52.svalbard.util.CodingHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import org.n52.shetland.ogc.sos.Sos2Constants;
-import org.n52.shetland.ogc.sos.SosConstants;
-import org.n52.shetland.ogc.sos.delobs.DeleteObservationConstants;
-import org.n52.shetland.ogc.sos.request.DeleteObservationRequest;
-import org.n52.svalbard.decode.exception.DecodingException;
-import org.n52.svalbard.decode.exception.UnsupportedDecoderXmlInputException;
 
 import com.google.common.base.Joiner;
 
@@ -47,28 +42,28 @@ import net.opengis.sosdo.x10.DeleteObservationType;
  *
  * @since 1.0.0
  */
-public class DeleteObservationDecoder implements Decoder<DeleteObservationRequest, XmlObject> {
+public class DeleteObservationDecoder
+        extends AbstractXmlDecoder<XmlObject, DeleteObservationRequest> {
 
-    @SuppressWarnings("unchecked")
-    private static final Set<DecoderKey> DECODER_KEYS = union(
-            decoderKeysForElements(DeleteObservationConstants.NS_SOSDO_1_0, DeleteObservationDocument.class),
-            xmlDecoderKeysForOperation(SOS, Sos2Constants.SERVICEVERSION,
+    private static final Set<DecoderKey> DECODER_KEYS = CollectionHelper.union(
+            CodingHelper.decoderKeysForElements(DeleteObservationConstants.NS_SOSDO_1_0,
+                    DeleteObservationDocument.class),
+            CodingHelper.xmlDecoderKeysForOperation(Sos2Constants.SOS, Sos2Constants.SERVICEVERSION,
                     DeleteObservationConstants.Operations.DeleteObservation));
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DeleteObservationDecoder.class);
 
     public DeleteObservationDecoder() {
-        LOGGER.info("Decoder for the following keys initialized successfully: {}!", Joiner.on(", ").join(DECODER_KEYS));
+        LOGGER.info("Decoder for the following keys initialized successfully: {}!",
+                Joiner.on(", ").join(DECODER_KEYS));
     }
 
-    @Override
     public Set<DecoderKey> getKeys() {
         return Collections.unmodifiableSet(DECODER_KEYS);
     }
 
-    @Override
     public DeleteObservationRequest decode(XmlObject xmlObject) throws DecodingException {
-        LOGGER.debug(format("REQUESTTYPE: %s", xmlObject != null ? xmlObject.getClass() : "null recevied"));
+        LOGGER.debug(String.format("REQUESTTYPE: %s", xmlObject != null ? xmlObject.getClass() : "null recevied"));
         // XmlHelper.validateDocument(xmlObject);
         if (xmlObject instanceof DeleteObservationDocument) {
             DeleteObservationDocument delObsDoc = (DeleteObservationDocument) xmlObject;
@@ -76,7 +71,7 @@ public class DeleteObservationDecoder implements Decoder<DeleteObservationReques
             LOGGER.debug(String.format("Decoded request: %s", decodedRequest));
             return decodedRequest;
         } else {
-            throw new UnsupportedDecoderXmlInputException(this, xmlObject);
+            throw new UnsupportedDecoderInputException(this, xmlObject);
         }
     }
 
@@ -87,21 +82,19 @@ public class DeleteObservationDecoder implements Decoder<DeleteObservationReques
         DeleteObservationType xbDelObsType = xbDelObsDoc.getDeleteObservation();
 
         if (xbDelObsType != null) {
-            delObsRequest = new DeleteObservationRequest();
+            delObsRequest = new DeleteObservationRequest(DeleteObservationConstants.NS_SOSDO_1_0);
             delObsRequest.setVersion(xbDelObsType.getVersion());
             delObsRequest.setService(xbDelObsType.getService());
-            delObsRequest.setObservationIdentifier(xbDelObsType.getObservation());
+            delObsRequest.addObservationIdentifier(xbDelObsType.getObservation());
         } else {
-            throw new DecodingException("Received XML document is not valid. Set log level to debug to get more details");
+            throw new DecodingException(
+                    "Received XML document is not valid. Set log level to debug to get more details");
         }
 
         return delObsRequest;
     }
 
-    public Set<String> getConformanceClasses(String service, String version) {
-        if(SosConstants.SOS.equals(service) && Sos2Constants.SERVICEVERSION.equals(version)) {
-            return Collections.unmodifiableSet(DeleteObservationConstants.CONFORMANCE_CLASSES);
-        }
+    public Set<SupportedType> getSupportedTypes() {
         return Collections.emptySet();
     }
 

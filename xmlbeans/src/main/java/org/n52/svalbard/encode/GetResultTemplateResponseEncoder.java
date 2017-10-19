@@ -18,6 +18,18 @@ package org.n52.svalbard.encode;
 
 import java.util.Set;
 
+import org.apache.xmlbeans.XmlException;
+import org.apache.xmlbeans.XmlObject;
+import org.n52.shetland.ogc.sos.Sos2Constants;
+import org.n52.shetland.ogc.sos.SosResultEncoding;
+import org.n52.shetland.ogc.sos.SosResultStructure;
+import org.n52.shetland.ogc.sos.response.GetResultTemplateResponse;
+import org.n52.shetland.w3c.SchemaLocation;
+import org.n52.svalbard.encode.exception.EncodingException;
+import org.n52.svalbard.util.XmlHelper;
+
+import com.google.common.collect.Sets;
+
 import net.opengis.sos.x20.GetResultTemplateResponseDocument;
 import net.opengis.sos.x20.GetResultTemplateResponseType;
 import net.opengis.sos.x20.GetResultTemplateResponseType.ResultEncoding;
@@ -25,35 +37,23 @@ import net.opengis.sos.x20.GetResultTemplateResponseType.ResultStructure;
 import net.opengis.swe.x20.DataRecordDocument;
 import net.opengis.swe.x20.TextEncodingDocument;
 
-import org.apache.xmlbeans.XmlException;
-import org.apache.xmlbeans.XmlObject;
-
-import org.n52.shetland.ogc.sos.Sos2Constants;
-import org.n52.shetland.ogc.sos.SosResultEncoding;
-import org.n52.shetland.ogc.sos.SosResultStructure;
-import org.n52.shetland.ogc.sos.response.GetResultTemplateResponse;
-import org.n52.shetland.w3c.SchemaLocation;
-import org.n52.svalbard.XmlBeansEncodingFlags;
-import org.n52.svalbard.encode.exception.EncodingException;
-import org.n52.svalbard.util.XmlHelper;
-
-import com.google.common.collect.Sets;
-
 /**
  * TODO JavaDoc
  *
  * @author <a href="mailto:c.autermann@52north.org">Christian Autermann</a>
  *
- * @since 4.0.0
+ * @since 1.0.0
  */
-public class GetResultTemplateResponseEncoder extends AbstractSosResponseEncoder<GetResultTemplateResponse> {
+public class GetResultTemplateResponseEncoder
+        extends AbstractSosResponseEncoder<GetResultTemplateResponse> {
 
     public GetResultTemplateResponseEncoder() {
         super(Sos2Constants.Operations.GetResultTemplate.name(), GetResultTemplateResponse.class);
     }
 
     @Override
-    protected XmlObject create(GetResultTemplateResponse response) throws EncodingException {
+    protected XmlObject create(GetResultTemplateResponse response)
+            throws EncodingException {
         GetResultTemplateResponseDocument doc = GetResultTemplateResponseDocument.Factory.newInstance(getXmlOptions());
         GetResultTemplateResponseType xbResponse = doc.addNewGetResultTemplateResponse();
         xbResponse.setResultEncoding(createResultEncoding(response.getResultEncoding()));
@@ -61,21 +61,22 @@ public class GetResultTemplateResponseEncoder extends AbstractSosResponseEncoder
         return doc;
     }
 
-    private ResultEncoding createResultEncoding(SosResultEncoding resultEncoding) throws EncodingException {
+    private ResultEncoding createResultEncoding(SosResultEncoding resultEncoding)
+            throws EncodingException {
         // TODO move encoding to SWECommonEncoder
         final TextEncodingDocument xbEncoding;
         if (resultEncoding.isEncoded()) {
             try {
                 xbEncoding = TextEncodingDocument.Factory.parse(resultEncoding.getXml().get());
             } catch (XmlException ex) {
-                throw new EncodingException("ResultEncoding element encoding is not supported!", ex);
+                throw unsupportedResultEncoding(ex);
             }
         } else {
             XmlObject xml = encodeSwe(EncodingContext.of(XmlBeansEncodingFlags.DOCUMENT), resultEncoding.get().get());
             if (xml instanceof TextEncodingDocument) {
                 xbEncoding = (TextEncodingDocument) xml;
             } else {
-                throw new EncodingException("ResultEncoding element encoding is not supported!");
+                throw unsupportedResultEncoding();
             }
 
         }
@@ -85,21 +86,22 @@ public class GetResultTemplateResponseEncoder extends AbstractSosResponseEncoder
         return xbResultEncoding;
     }
 
-    private ResultStructure createResultStructure(SosResultStructure resultStructure) throws EncodingException {
+    private ResultStructure createResultStructure(SosResultStructure resultStructure)
+            throws EncodingException {
         // TODO move encoding to SWECommonEncoder
         final DataRecordDocument dataRecordDoc;
         if (resultStructure.isEncoded()) {
             try {
                 dataRecordDoc = DataRecordDocument.Factory.parse(resultStructure.getXml().get());
             } catch (XmlException ex) {
-                throw new EncodingException("ResultStructure element encoding is not supported!", ex);
+                throw unsupportedResultStructure(ex);
             }
         } else {
             XmlObject xml = encodeSwe(EncodingContext.of(XmlBeansEncodingFlags.DOCUMENT), resultStructure.get().get());
             if (xml instanceof DataRecordDocument) {
                 dataRecordDoc = (DataRecordDocument) xml;
             } else {
-                throw new EncodingException("ResultStructure element encoding is not supported!");
+                throw unsupportedResultStructure();
             }
         }
         ResultStructure xbResultStructure = ResultStructure.Factory.newInstance(getXmlOptions());
@@ -111,5 +113,21 @@ public class GetResultTemplateResponseEncoder extends AbstractSosResponseEncoder
     @Override
     public Set<SchemaLocation> getConcreteSchemaLocations() {
         return Sets.newHashSet(Sos2Constants.SOS_GET_RESULT_TEMPLATE_SCHEMA_LOCATION);
+    }
+
+    private static EncodingException unsupportedResultEncoding(Throwable cause) {
+        return new EncodingException("ResultEncoding element encoding is not supported!", cause);
+    }
+
+    private static EncodingException unsupportedResultEncoding() {
+        return unsupportedResultEncoding(null);
+    }
+
+    private static EncodingException unsupportedResultStructure(Throwable cause) {
+        return new EncodingException("ResultStructure element encoding is not supported!", cause);
+    }
+
+    private static EncodingException unsupportedResultStructure() {
+        return unsupportedResultStructure(null);
     }
 }

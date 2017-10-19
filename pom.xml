@@ -23,7 +23,7 @@
     <parent>
         <groupId>org.n52</groupId>
         <artifactId>parent</artifactId>
-        <version>7</version>
+        <version>8</version>
     </parent>
 
     <groupId>org.n52.svalbard</groupId>
@@ -42,6 +42,9 @@
         <module>core</module>
         <module>xmlbeans</module>
         <module>xmlstream</module>
+        <module>json</module>
+        <module>json-common</module>
+        <module>exi</module>
         <module>sensorthings</module>
     </modules>
 
@@ -106,11 +109,25 @@
     <properties>
         <timestamp>${maven.build.timestamp}</timestamp>
         <version.java>1.8</version.java>
-        <n52.common.xml.version>2.2.0</n52.common.xml.version>
+        <n52.common.xml.version>2.3.0</n52.common.xml.version>
         <saxon.version>9.1.0.8</saxon.version>
         <xmlbeans.version>2.6.0</xmlbeans.version>
-        <version.faroe>1.2.0-SNAPSHOT</version.faroe>
+        <jackson.version>2.8.5</jackson.version>
     </properties>
+    
+    <repositories>
+        <repository>
+            <id>sonatype-nexus-snapshots</id>
+            <name>Sonatype Nexus Snaphots</name>
+            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
 
     <dependencyManagement>
         <dependencies>
@@ -118,6 +135,11 @@
             <dependency>
                 <groupId>${project.groupId}</groupId>
                 <artifactId>svalbard</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>svalbard-exi</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -132,6 +154,12 @@
             </dependency>
             <dependency>
                 <groupId>${project.groupId}</groupId>
+                <artifactId>svalbard-json</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>svalbard-json-common</artifactId>
                 <artifactId>svalbard-sensorthings</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -147,29 +175,24 @@
                 <version>3.0.1</version>
             </dependency>
             <dependency>
-                <groupId>org.springframework</groupId>
-                <artifactId>spring-beans</artifactId>
-                <version>4.2.3.RELEASE</version>
-            </dependency>
-            <dependency>
                 <groupId>org.n52.janmayen</groupId>
                 <artifactId>janmayen</artifactId>
-                <version>1.1.0-SNAPSHOT</version>
+                <version>1.2.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>org.n52.faroe</groupId>
                 <artifactId>faroe</artifactId>
-                <version>${version.faroe}</version>
+                <version>1.3.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>org.n52.faroe</groupId>
                 <artifactId>faroe-annotations</artifactId>
-                <version>${version.faroe}</version>
+                <version>1.3.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>org.n52.faroe</groupId>
                 <artifactId>faroe-utils</artifactId>
-                <version>${version.faroe}</version>
+                <version>1.3.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>org.n52.shetland</groupId>
@@ -180,11 +203,17 @@
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
                 <version>20.0</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.google.code.findbugs</groupId>
+                        <artifactId>jsr305</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
-                <version>1.7.21</version>
+                <version>1.7.25</version>
             </dependency>
             <dependency>
                 <groupId>com.vividsolutions</groupId>
@@ -194,7 +223,7 @@
             <dependency>
                 <groupId>joda-time</groupId>
                 <artifactId>joda-time</artifactId>
-                <version>2.9.4</version>
+                <version>2.9.9</version>
             </dependency>
             <dependency>
                 <groupId>javax.inject</groupId>
@@ -206,12 +235,50 @@
                 <artifactId>stax-api</artifactId>
                 <version>1.0.1</version>
             </dependency>
+            <dependency>
+                <groupId>commons-io</groupId>
+                <artifactId>commons-io</artifactId>
+                <version>2.4</version>
+            </dependency>
+            <dependency>
+                <groupId>javax.servlet</groupId>
+                <artifactId>javax.servlet-api</artifactId>
+                <version>3.1.0</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>xml-apis</groupId>
+                <artifactId>xml-apis</artifactId>
+                <version>1.4.01</version>
+            </dependency>
+            <dependency>
+                <groupId>com.siemens.ct.exi</groupId>
+                <artifactId>exificient</artifactId>
+                <version>0.9.6</version>
+            </dependency>
+            <dependency>
+                <groupId>com.siemens.ct.exi</groupId>
+                <artifactId>exificient-grammars</artifactId>
+                <version>0.9.6</version>
+            </dependency>
+            <dependency>
+                <groupId>com.siemens.ct.exi</groupId>
+                <artifactId>exificient-core</artifactId>
+                <version>0.9.6</version>
+            </dependency>
 
             <!-- Testing dependencies -->
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>svalbard-json-common</artifactId>
+                <version>${project.version}</version>
+                <classifier>tests</classifier>
+            </dependency>
             <dependency>
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>
                 <version>4.12</version>
+                <scope>test</scope>
                 <exclusions>
                     <exclusion>
                         <groupId>org.hamcrest</groupId>
@@ -223,17 +290,74 @@
                 <groupId>org.hamcrest</groupId>
                 <artifactId>hamcrest-all</artifactId>
                 <version>1.3</version>
+                <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.mockito</groupId>
-                <artifactId>mockito-all</artifactId>
-                <version>1.10.19</version>
+                <artifactId>mockito-core</artifactId>
+                <version>2.8.47</version>
+                <scope>tests</scope>
                 <exclusions>
                     <exclusion>
                         <groupId>org.hamcrest</groupId>
                         <artifactId>hamcrest-core</artifactId>
                     </exclusion>
                 </exclusions>
+            </dependency>
+            
+            <!-- JSON -->
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-core</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-annotations</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.fge</groupId>
+                <artifactId>json-schema-validator</artifactId>
+                <version>2.2.6</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.google.code.findbugs</groupId>
+                        <artifactId>jsr305</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>com.github.fge</groupId>
+                <artifactId>json-schema-core</artifactId>
+                <version>1.2.5</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.google.code.findbugs</groupId>
+                        <artifactId>jsr305</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>com.github.fge</groupId>
+                <artifactId>jackson-coreutils</artifactId>
+                <version>1.8</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.google.code.findbugs</groupId>
+                        <artifactId>jsr305</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>javax.activation</groupId>
+                <artifactId>activation</artifactId>
+                <version>1.1.1</version>
             </dependency>
 
             <!-- XML -->
@@ -363,6 +487,81 @@
                 <version>${n52.common.xml.version}</version>
             </dependency>
             <dependency>
+                <groupId>org.n52.sensorweb</groupId>
+                <artifactId>52n-xml-sosdo-v20</artifactId>
+                <version>${n52.common.xml.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.n52.sensorweb</groupId>
+                <artifactId>52n-xml-ifoi-v10</artifactId>
+                <version>${n52.common.xml.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.n52.sensorweb</groupId>
+                <artifactId>52n-xml-drt-v100</artifactId>
+                <version>${n52.common.xml.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.n52.sensorweb</groupId>
+                <artifactId>52n-xml-gwml-v22</artifactId>
+                <version>${n52.common.xml.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.n52.sensorweb</groupId>
+                <artifactId>52n-xml-cv-v022</artifactId>
+                <version>${n52.common.xml.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.n52.sensorweb</groupId>
+                <artifactId>52n-xml-gml-v33</artifactId>
+                <version>${n52.common.xml.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.n52.sensorweb</groupId>
+                <artifactId>52n-xml-gmlcov-v10</artifactId>
+                <version>${n52.common.xml.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.n52.sensorweb</groupId>
+                <artifactId>52n-xml-inspire-ompr-v30</artifactId>
+                <version>${n52.common.xml.version}</version>
+            </dependency>
+           <dependency>
+                <groupId>org.n52.sensorweb</groupId>
+                <artifactId>52n-xml-inspire-base2-v20</artifactId>
+                <version>${n52.common.xml.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.n52.sensorweb</groupId>
+                <artifactId>52n-xml-inspire-base-v33</artifactId>
+                <version>${n52.common.xml.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.n52.sensorweb</groupId>
+                <artifactId>52n-xml-inspire-omso-v301</artifactId>
+                <version>${n52.common.xml.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.n52.sensorweb</groupId>
+                <artifactId>52n-xml-inspire-omor-v30</artifactId>
+                <version>${n52.common.xml.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.n52.sensorweb</groupId>
+                <artifactId>52n-xml-inspire-ef-v40</artifactId>
+                <version>${n52.common.xml.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.n52.sensorweb</groupId>
+                <artifactId>52n-xml-sosgda-v20</artifactId>
+                <version>${n52.common.xml.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.n52.sensorweb</groupId>
+                <artifactId>52n-xml-sosro-v10</artifactId>
+                <version>${n52.common.xml.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.apache.xmlbeans</groupId>
                 <artifactId>xmlbeans</artifactId>
                 <version>${xmlbeans.version}</version>
@@ -385,7 +584,7 @@
             <dependency>
                 <groupId>net.sf.saxon</groupId>
                 <artifactId>Saxon-HE</artifactId>
-                <version>9.5.1-8</version>
+                <version>9.8.0-3</version>
             </dependency>
             <dependency>
                 <groupId>xmlunit</groupId>
@@ -397,33 +596,8 @@
                 <artifactId>commons-lang</artifactId>
                 <version>2.6</version>
             </dependency>
-            <dependency>
-                <groupId>org.n52.sensorweb</groupId>
-                <artifactId>52n-xml-sosgda-v20</artifactId>
-                <version>2.2.1-SNAPSHOT</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.n52.sensorweb</groupId>
-                        <artifactId>52n-xml-swes-v20</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.n52.sensorweb</groupId>
-                        <artifactId>52n-xml-gml-v321</artifactId>
-                    </exclusion>
-                </exclusions>
-                <type>jar</type>
-            </dependency>
-            <dependency>
-                <groupId>org.n52.sensorweb</groupId>
-                <artifactId>52n-xml-sosro-v10</artifactId>
-                <version>2.2.1-SNAPSHOT</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.n52.sensorweb</groupId>
-                        <artifactId>52n-xml-gml-v321</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
+            
+            
         </dependencies>
     </dependencyManagement>
 
@@ -518,14 +692,6 @@
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <configuration>
                     <additionalJOption>-Xdoclint:none</additionalJOption>
-                </configuration>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-checkstyle-plugin</artifactId>
-                <configuration>
-                    <failOnViolation>false</failOnViolation>
                 </configuration>
             </plugin>
 

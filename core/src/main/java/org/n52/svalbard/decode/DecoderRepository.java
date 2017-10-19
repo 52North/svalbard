@@ -17,13 +17,15 @@
 package org.n52.svalbard.decode;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import javax.inject.Inject;
 
+import org.n52.janmayen.component.AbstractSimilarityKeyComponentRepository;
 import org.n52.janmayen.lifecycle.Constructable;
-import org.n52.svalbard.AbstractCodingRepository;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -32,23 +34,24 @@ import com.google.common.annotations.VisibleForTesting;
  *
  * @author Christian Autermann
  */
-public class DecoderRepository extends AbstractCodingRepository<DecoderKey, Decoder<?, ?>, DecoderFactory>
+public class DecoderRepository
+        extends AbstractSimilarityKeyComponentRepository<DecoderKey, Decoder<?, ?>, DecoderFactory>
         implements Constructable {
 
-    @Autowired(required = false)
-    private Collection<Decoder<?, ?>> decoders;
+    @Inject
+    private Optional<Collection<Decoder<?, ?>>> decoders = Optional.of(Collections.emptyList());
 
-    @Autowired(required = false)
-    private Collection<DecoderFactory> decoderFactories;
+    @Inject
+    private Optional<Collection<DecoderFactory>> decoderFactories = Optional.of(Collections.emptyList());
 
     @VisibleForTesting
     void setDecoders(Collection<Decoder<?, ?>> decoders) {
-        this.decoders = decoders;
+        this.decoders = Optional.of(decoders);
     }
 
     @VisibleForTesting
     void setDecoderFactories(Collection<DecoderFactory> decoderFactories) {
-        this.decoderFactories = decoderFactories;
+        this.decoderFactories = Optional.of(decoderFactories);
     }
 
     @Override
@@ -64,9 +67,13 @@ public class DecoderRepository extends AbstractCodingRepository<DecoderKey, Deco
         return hasComponent(key, keys);
     }
 
-    @SuppressWarnings("unchecked")
     public <F, T> Decoder<F, T> getDecoder(DecoderKey key, DecoderKey... keys) {
-        return (Decoder<F, T>) getComponent(key, keys);
+        return this.<F, T>tryGetDecoder(key, keys).orElse(null);
+    }
+
+    @SuppressWarnings("unchecked")
+    public <F, T> Optional<Decoder<F, T>> tryGetDecoder(DecoderKey key, DecoderKey... keys) {
+        return tryGetComponent(key, keys).map(e -> (Decoder<F, T>) e);
     }
 
     @Override

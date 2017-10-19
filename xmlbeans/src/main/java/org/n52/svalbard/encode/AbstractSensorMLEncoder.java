@@ -22,20 +22,20 @@ import java.util.Set;
 import org.apache.xmlbeans.XmlObject;
 import org.apache.xmlbeans.XmlOptions;
 import org.custommonkey.xmlunit.Diff;
+import org.n52.janmayen.NcName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
-
-import org.n52.janmayen.NcName;
 
 /**
  * Abstract {@link AbstractXmlEncoder} class to encode OGC SensorML
  *
  * @author <a href="mailto:c.hollmann@52north.org">Carsten Hollmann</a>
- * @since 4.2.0
+ * @since 1.0.0
  *
  */
-public abstract class AbstractSensorMLEncoder extends AbstractXmlEncoder<XmlObject, Object>
+public abstract class AbstractSensorMLEncoder
+        extends AbstractXmlEncoder<XmlObject, Object>
         implements ProcedureEncoder<XmlObject, Object> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractSensorMLEncoder.class);
@@ -476,4 +476,15 @@ public abstract class AbstractSensorMLEncoder extends AbstractXmlEncoder<XmlObje
         return NcName.makeValid(outputName);
     }
 
+    // protected void extendOutputs(AbstractProcess abstractProcess) {
+    // if (abstractProcess.isSetPhenomenon()) {
+    // for (SmlIo output : abstractProcess.getOutputs()) {
+    // if
+    // (abstractProcess.hasPhenomenonFor(output.getIoValue().getDefinition())) {
+    // output.getIoValue().setName(
+    // abstractProcess.getPhenomenonFor(output.getIoValue().getDefinition()).getName());
+    // }
+    // }
+    // }
+    // }
 }

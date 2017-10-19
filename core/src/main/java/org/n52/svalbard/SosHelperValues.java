@@ -17,11 +17,13 @@
 package org.n52.svalbard;
 
 import org.n52.svalbard.encode.EncodingContext;
+import org.n52.svalbard.encode.XmlBeansEncodingFlags;
 
 /**
  * @author Matthes Rieke
  * @deprecated use {@link EncodingContext} with any enum (e.g. {@link XmlBeansEncodingFlags})
  */
+@Deprecated
 public enum SosHelperValues implements HelperValues {
     @Deprecated
     GMLID,
@@ -36,7 +38,6 @@ public enum SosHelperValues implements HelperValues {
     @Deprecated
     FOR_OBSERVATION,
     ENCODE,
-    ENCODE_NAMESPACE,
     REFERENCED,
     /**
      * Encode the given <tt>OwsExceptionReport</tt> not into an

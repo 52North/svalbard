@@ -61,7 +61,7 @@ import com.google.common.collect.Lists;
 /**
  * @author Shane StClair
  *
- * @since 4.0.0
+ * @since 1.0.0
  */
 public class SensorMLEncoderV101Test {
 

@@ -24,18 +24,18 @@ import org.n52.svalbard.encode.exception.EncodingException;
  * Generic interface for StreamingEncoders.
  *
  * @author <a href="mailto:c.hollmann@52north.org">Carsten Hollmann</a>
- * @since 4.1.0
+ * @since 1.0.0
  *
  * @param <T> the resulting type, the "Target"
  * @param <S> the input type, the "Source"
  */
 public interface StreamingEncoder<T, S> extends Encoder<T, S> {
 
-    void encode(S objectToEncode, OutputStream outputStream) throws EncodingException;
+    default void encode(S objectToEncode, OutputStream outputStream) throws EncodingException {
+        encode(objectToEncode, outputStream, EncodingContext.empty());
+    }
 
-    void encode(S objectToEncode, OutputStream outputStream, EncodingValues encodingValues)
+    void encode(S objectToEncode, OutputStream outputStream, EncodingContext context)
             throws EncodingException;
-
-    boolean forceStreaming();
 
 }

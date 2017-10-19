@@ -42,13 +42,13 @@ import com.google.common.base.Joiner;
  * @author <a href="mailto:e.h.juerrens@52north.org">Eike Hinderk
  *         J&uuml;rrens</a>
  *
- * @since 4.0.0
+ * @since 1.0.0
  */
-public class SwesExtensionDecoderv20 extends AbstractXmlDecoder<XmlObject, SwesExtension<?>> {
+public class SwesExtensionDecoderv20
+        extends AbstractXmlDecoder<XmlObject, SwesExtension<?>> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SwesDecoderv20.class);
 
-    @SuppressWarnings("unchecked")
     private static final Set<DecoderKey> DECODER_KEYS =
             CollectionHelper.union(CodingHelper.decoderKeysForElements(W3CConstants.NS_XS, XmlAnyTypeImpl.class),
                     CodingHelper.decoderKeysForElements(SwesConstants.NS_SWES_20, XmlAnyTypeImpl.class));
@@ -64,18 +64,18 @@ public class SwesExtensionDecoderv20 extends AbstractXmlDecoder<XmlObject, SwesE
     }
 
     @Override
-    public SwesExtension<?> decode(XmlObject xmlObject) throws DecodingException, UnsupportedDecoderInputException {
+    public SwesExtension<?> decode(XmlObject xmlObject)
+            throws DecodingException, UnsupportedDecoderInputException {
 
         if (isSwesExtension(xmlObject)) {
             XmlObject[] children = xmlObject.selectPath("./*");
             if (children.length == 1) {
                 Object xmlObj = decodeXmlElement(children[0]);
-                SwesExtension<Object> extension = new SwesExtension<>();
-                extension.setValue(xmlObj);
                 if (xmlObj instanceof SweAbstractDataComponent) {
-                    extension.setDefinition(((SweAbstractDataComponent) xmlObj).getDefinition());
+                    SwesExtension<SweAbstractDataComponent> extension = new SwesExtension<>();
+                    extension.setValue((SweAbstractDataComponent) xmlObj);
+                    return extension;
                 }
-                return extension;
             }
         }
         throw new UnsupportedDecoderXmlInputException(this, xmlObject);

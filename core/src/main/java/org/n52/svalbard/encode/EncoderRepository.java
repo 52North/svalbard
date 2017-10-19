@@ -17,13 +17,15 @@
 package org.n52.svalbard.encode;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import javax.inject.Inject;
 
+import org.n52.janmayen.component.AbstractSimilarityKeyComponentRepository;
 import org.n52.janmayen.lifecycle.Constructable;
-import org.n52.svalbard.AbstractCodingRepository;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -32,14 +34,15 @@ import com.google.common.annotations.VisibleForTesting;
  *
  * @author Christian Autermann
  */
-public class EncoderRepository extends AbstractCodingRepository<EncoderKey, Encoder<?, ?>, EncoderFactory>
+public class EncoderRepository
+        extends AbstractSimilarityKeyComponentRepository<EncoderKey, Encoder<?, ?>, EncoderFactory>
         implements Constructable {
 
-    @Autowired(required = false)
-    private Collection<Encoder<?, ?>> encoders;
+    @Inject
+    private Optional<Collection<Encoder<?, ?>>> encoders = Optional.of(Collections.emptyList());
 
-    @Autowired(required = false)
-    private Collection<EncoderFactory> encoderFactories;
+    @Inject
+    private Optional<Collection<EncoderFactory>> encoderFactories = Optional.of(Collections.emptyList());
 
     @Override
     public void init() {
@@ -52,16 +55,20 @@ public class EncoderRepository extends AbstractCodingRepository<EncoderKey, Enco
 
     @VisibleForTesting
     void setEncoders(Collection<Encoder<?, ?>> encoders) {
-        this.encoders = encoders;
+        this.encoders = Optional.of(encoders);
     }
 
     public boolean hasEncoder(EncoderKey key, EncoderKey... keys) {
         return hasComponent(key, keys);
     }
 
-    @SuppressWarnings("unchecked")
     public <F, T> Encoder<F, T> getEncoder(EncoderKey key, EncoderKey... keys) {
-        return (Encoder<F, T>) getComponent(key, keys);
+        return this.<F, T>tryGetEncoder(key, keys).orElse(null);
+    }
+
+    @SuppressWarnings("unchecked")
+    public <F, T> Optional<Encoder<F, T>> tryGetEncoder(EncoderKey key, EncoderKey... keys) {
+        return tryGetComponent(key, keys).map(e -> (Encoder<F, T>) e);
     }
 
     @Override
@@ -71,7 +78,7 @@ public class EncoderRepository extends AbstractCodingRepository<EncoderKey, Enco
 
     @VisibleForTesting
     void setEncoderFactories(Collection<EncoderFactory> encoderFactories) {
-        this.encoderFactories = encoderFactories;
+        this.encoderFactories = Optional.of(encoderFactories);
     }
 
     private class CompositeEncoderKey extends CompositeKey implements EncoderKey {
