@@ -160,6 +160,10 @@
             <dependency>
                 <groupId>${project.groupId}</groupId>
                 <artifactId>svalbard-json-common</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
                 <artifactId>svalbard-sensorthings</artifactId>
                 <version>${project.version}</version>
             </dependency>

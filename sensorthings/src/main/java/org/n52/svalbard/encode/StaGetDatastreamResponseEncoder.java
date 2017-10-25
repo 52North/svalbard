@@ -30,7 +30,7 @@ import org.n52.janmayen.http.MediaTypes;
 import org.n52.shetland.ogc.UoM;
 import org.n52.shetland.ogc.gml.AbstractFeature;
 import org.n52.shetland.ogc.gml.CodeType;
-import org.n52.shetland.ogc.gml.GmlAbstractGeometry;
+import org.n52.shetland.ogc.om.ObservationStream;
 import org.n52.shetland.ogc.om.OmObservation;
 import org.n52.shetland.ogc.om.OmObservationConstellation;
 import org.n52.shetland.ogc.om.features.samplingFeatures.SamplingFeature;
@@ -38,13 +38,14 @@ import org.n52.shetland.ogc.om.values.BooleanValue;
 import org.n52.shetland.ogc.om.values.CategoryValue;
 import org.n52.shetland.ogc.om.values.CountValue;
 import org.n52.shetland.ogc.om.values.QuantityValue;
+import org.n52.shetland.ogc.ows.exception.OwsExceptionReport;
 import org.n52.shetland.ogc.sos.Sos2Constants;
 import org.n52.shetland.ogc.sos.SosConstants;
 import org.n52.shetland.ogc.sos.response.GetObservationResponse;
 import org.n52.shetland.ogc.sta.StaConstants;
 import org.n52.shetland.ogc.sta.StaFeatureOfInterest;
 import org.n52.shetland.ogc.sta.StaObservation;
-import org.n52.sos.encode.json.JSONEncoder;
+import org.n52.svalbard.encode.json.JSONEncoder;
 import org.n52.svalbard.encode.exception.EncodingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,43 +69,21 @@ public class StaGetDatastreamResponseEncoder extends JSONEncoder<GetObservationR
 
     protected void encodeResponse(ObjectNode json, GetObservationResponse t) throws EncodingException {
 
-        List<OmObservation> observationCollection = t.getObservationCollection();
+        ObservationStream observationCollection = t.getObservationCollection();
         List<StaDatastream> datastreams = new ArrayList<>();
 
+
         // create datastreams from observations, group observations by their OmObservationConstellation
+        // TODO should I instead create a new Stream of Observations? Streams should not be iterated over more than ones.
         Iterator<StaDatastream> dsIterator;
         Boolean found;
 
-        for (OmObservation o : observationCollection) {
-            if (datastreams.isEmpty()) {
+        try {
+            while (observationCollection.hasNext()) {
+                OmObservation o = observationCollection.next();
 
-                String id = encodeDatastreamId(o.getObservationConstellation());
-                String ot = getObservationType(o);
+                if (datastreams.isEmpty()) {
 
-                if (ot.equals(StaConstants.OBSERVATION_TYPE_TRUTH_OBSERVATION)) {
-                    datastreams.add(new StaDatastream(id, o.getObservationConstellation(), ot, transformObservation(o, id)));
-                } else {
-                    UoM uom = o.getValue().getValue().getUnitObject();
-                    datastreams.add(new StaDatastream(id, o.getObservationConstellation(), ot, uom, transformObservation(o, id)));
-                }
-
-            } else {
-
-                // find matching datastream for this observation
-                dsIterator = datastreams.iterator();
-                found = false;
-
-                while (!found && dsIterator.hasNext()) {
-                    StaDatastream ds = dsIterator.next();
-
-                    if (o.getObservationConstellation().equals(ds.getObservationConstellation())) {
-                        ds.addObservation(transformObservation(o, ds.getId()));
-                        found = true;
-                    }
-                }
-
-                // if no match was found, create new Datastream from this observation
-                if (!found) {
                     String id = encodeDatastreamId(o.getObservationConstellation());
                     String ot = getObservationType(o);
 
@@ -114,8 +93,38 @@ public class StaGetDatastreamResponseEncoder extends JSONEncoder<GetObservationR
                         UoM uom = o.getValue().getValue().getUnitObject();
                         datastreams.add(new StaDatastream(id, o.getObservationConstellation(), ot, uom, transformObservation(o, id)));
                     }
+
+                } else {
+
+                    // find matching datastream for this observation
+                    dsIterator = datastreams.iterator();
+                    found = false;
+
+                    while (!found && dsIterator.hasNext()) {
+                        StaDatastream ds = dsIterator.next();
+
+                        if (o.getObservationConstellation().equals(ds.getObservationConstellation())) {
+                            ds.addObservation(transformObservation(o, ds.getId()));
+                            found = true;
+                        }
+                    }
+
+                    // if no match was found, create new Datastream from this observation
+                    if (!found) {
+                        String id = encodeDatastreamId(o.getObservationConstellation());
+                        String ot = getObservationType(o);
+
+                        if (ot.equals(StaConstants.OBSERVATION_TYPE_TRUTH_OBSERVATION)) {
+                            datastreams.add(new StaDatastream(id, o.getObservationConstellation(), ot, transformObservation(o, id)));
+                        } else {
+                            UoM uom = o.getValue().getValue().getUnitObject();
+                            datastreams.add(new StaDatastream(id, o.getObservationConstellation(), ot, uom, transformObservation(o, id)));
+                        }
+                    }
                 }
             }
+        } catch (OwsExceptionReport ex) {
+            throw new EncodingException(ex);
         }
 
         // add basic information

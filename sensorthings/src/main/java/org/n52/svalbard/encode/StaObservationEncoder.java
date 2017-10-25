@@ -22,7 +22,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.Map;
 import org.n52.shetland.ogc.sta.StaConstants;
 import org.n52.shetland.ogc.sta.StaObservation;
-import org.n52.sos.encode.json.JSONEncoder;
+import org.n52.svalbard.encode.json.JSONEncoder;
 import org.n52.svalbard.encode.exception.EncodingException;
 
 import org.slf4j.Logger;

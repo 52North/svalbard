@@ -20,7 +20,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.n52.shetland.ogc.sos.SosConstants;
 import org.n52.shetland.ogc.sos.request.GetObservationRequest;
 import org.n52.shetland.ogc.sta.StaConstants;
-import org.n52.sos.decode.json.AbstractSosRequestDecoder;
+import org.n52.svalbard.decode.json.AbstractSosRequestDecoder;
 
 import org.n52.svalbard.decode.exception.DecodingException;
 

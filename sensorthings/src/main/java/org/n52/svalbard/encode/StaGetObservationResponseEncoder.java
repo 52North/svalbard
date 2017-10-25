@@ -27,14 +27,16 @@ import org.n52.janmayen.Json;
 import org.n52.janmayen.http.MediaTypes;
 import org.n52.shetland.ogc.gml.AbstractFeature;
 import org.n52.shetland.ogc.gml.CodeType;
+import org.n52.shetland.ogc.om.ObservationStream;
 import org.n52.shetland.ogc.om.OmObservation;
 import org.n52.shetland.ogc.om.features.samplingFeatures.SamplingFeature;
+import org.n52.shetland.ogc.ows.exception.OwsExceptionReport;
 import org.n52.shetland.ogc.sos.Sos2Constants;
 import org.n52.shetland.ogc.sos.response.GetObservationResponse;
 import org.n52.shetland.ogc.sta.StaConstants;
 import org.n52.shetland.ogc.sta.StaFeatureOfInterest;
 import org.n52.shetland.ogc.sta.StaObservation;
-import org.n52.sos.encode.json.JSONEncoder;
+import org.n52.svalbard.encode.json.JSONEncoder;
 import org.n52.svalbard.encode.exception.EncodingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,16 +60,30 @@ public class StaGetObservationResponseEncoder extends JSONEncoder<GetObservation
 
     protected void encodeResponse(ObjectNode json, GetObservationResponse t) throws EncodingException {
 
-        List<OmObservation> observationCollection = t.getObservationCollection();
-
-        // add basic information
-        json.put(StaConstants.ANNOTATION_COUNT, observationCollection.size());
         ArrayNode dsArray = json.putArray(StaConstants.VALUES);
 
-        // encode observation
-        for (OmObservation o : observationCollection) {
-            dsArray.add(encodeObjectToJson(transformObservation(o)));
+        // encode observations
+        int observationCount = 0;
+        try {
+            while (t.getObservationCollection().hasNext()) {
+                OmObservation o = t.getObservationCollection().next();
+                if (o.getValue() instanceof ObservationStream) {
+                    ObservationStream value = (ObservationStream) o.getValue();
+                        while (value.hasNext()) {
+                            dsArray.add(encodeObjectToJson(transformObservation(value.next())));
+                            observationCount++;
+                    }
+                } else {
+                    dsArray.add(encodeObjectToJson(transformObservation(o)));
+                    observationCount++;
+                }
+            }
+        } catch (OwsExceptionReport ex) {
+            throw new EncodingException(ex);
         }
+
+        // add basic information
+        json.put(StaConstants.ANNOTATION_COUNT, observationCount);
     }
 
     @Override
@@ -97,6 +113,7 @@ public class StaGetObservationResponseEncoder extends JSONEncoder<GetObservation
 //        private String parameters; // [0..1]
 
         // TODO create Datastream id from procedure, observedProperty, offering and featureOfInterest
+        // not necessary for GET Observations
         //staObservation.setDatastream(datastreamID);
 
         staObservation.setFeatureOfInterest(
