@@ -22,16 +22,18 @@
                            http://www.springframework.org/schema/beans/spring-beans-4.1.xsd">
 
     <!-- ResponseWriterFactory implementations from coding/json -->
-    <bean class="org.n52.sos.encode.json.JSONResponseWriterFactory"/>
+    <!--    <bean class="org.n52.sos.encode.json.JSONResponseWriterFactory"/>-->
 
     <!-- Decoder implementations from svalbard/sensorthings -->
-
+    <bean class="org.n52.svalbard.decode.StaGetObservationsRequestDecoder"/>
+    <bean class="org.n52.svalbard.decode.StaGetObservationsWithIdRequestDecoder"/>
 
     <!-- Encoder implementations from svalbard/sensorthings-->
     <bean class="org.n52.svalbard.encode.StaDatastreamEncoder"/>
     <bean class="org.n52.svalbard.encode.StaFeatureOfInterestEncoder"/>
 <!--    <bean class="org.n52.svalbard.encode.StaGetDatastreamResponseEncoder"/>-->
     <bean class="org.n52.svalbard.encode.StaGetObservationResponseEncoder"/>
+    <bean class="org.n52.svalbard.encode.StaGetObservationByIdResponseEncoder"/>
     <bean class="org.n52.svalbard.encode.StaObservationEncoder"/>
 
 </beans>

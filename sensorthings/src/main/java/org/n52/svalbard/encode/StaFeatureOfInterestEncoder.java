@@ -30,6 +30,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * SensorThings FeatureOfInterest to JSON
+ * 
  * @author <a href="mailto:m.kiesow@52north.org">Martin Kiesow</a>
  */
 public class StaFeatureOfInterestEncoder extends JSONEncoder<StaFeatureOfInterest> {

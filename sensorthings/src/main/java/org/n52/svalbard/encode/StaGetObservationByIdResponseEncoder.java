@@ -33,7 +33,7 @@ import org.n52.shetland.ogc.om.features.samplingFeatures.SamplingFeature;
 import org.n52.shetland.ogc.ows.exception.OwsExceptionReport;
 import org.n52.shetland.ogc.sos.Sos1Constants;
 import org.n52.shetland.ogc.sos.Sos2Constants;
-import org.n52.shetland.ogc.sos.response.GetObservationResponse;
+import org.n52.shetland.ogc.sos.response.GetObservationByIdResponse;
 import org.n52.shetland.ogc.sta.StaConstants;
 import org.n52.shetland.ogc.sta.StaFeatureOfInterest;
 import org.n52.shetland.ogc.sta.StaObservation;
@@ -43,23 +43,23 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Request encoder for the SensorThings API Observations resource, used by GetObservation operations;
+ * Request encoder for the SensorThings API Observations resource, used by GetObservationById operations;
  * transforms SOS Observations into SensorThings Observations.
  *
  * @author <a href="mailto:m.kiesow@52north.org">Martin Kiesow</a>
  */
-public class StaGetObservationResponseEncoder extends JSONEncoder<GetObservationResponse> {
+public class StaGetObservationByIdResponseEncoder extends JSONEncoder<GetObservationByIdResponse> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(StaGetObservationResponseEncoder.class);
+    private static final Logger LOG = LoggerFactory.getLogger(StaGetObservationByIdResponseEncoder.class);
 
-    public StaGetObservationResponseEncoder() {
+    public StaGetObservationByIdResponseEncoder() {
 
-        super(GetObservationResponse.class,
+        super(GetObservationByIdResponse.class,
             new OperationResponseEncoderKey(Sos1Constants.SOS, Sos2Constants.SERVICEVERSION,
-                Sos2Constants.EN_GET_OBSERVATION, MediaTypes.APPLICATION_STA));
+                Sos2Constants.EN_GET_OBSERVATION_BY_ID, MediaTypes.APPLICATION_STA));
     }
 
-    protected void encodeResponse(ObjectNode json, GetObservationResponse t) throws EncodingException {
+    protected void encodeResponse(ObjectNode json, GetObservationByIdResponse t) throws EncodingException {
 
         ArrayNode dsArray = json.putArray(StaConstants.VALUES);
 
@@ -88,7 +88,7 @@ public class StaGetObservationResponseEncoder extends JSONEncoder<GetObservation
     }
 
     @Override
-    public JsonNode encodeJSON(GetObservationResponse t) throws EncodingException {
+    public JsonNode encodeJSON(GetObservationByIdResponse t) throws EncodingException {
 
         ObjectNode n = Json.nodeFactory().objectNode();
         encodeResponse(n, t);

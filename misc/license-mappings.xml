@@ -28,29 +28,4 @@
         <license>The Apache Software License, Version 2.0</license>
     </artifact>
     
-<!--    <artifact>
-        <groupId>org.n52.sensorweb</groupId>
-        <artifactId>52n-xml-sosgda-v20</artifactId>
-        <version>2.2.1-SNAPSHOT</version>
-        <license>The Apache Software License, Version 2.0</license>
-    </artifact>
-    <artifact>
-        <groupId>org.n52.sensorweb</groupId>
-        <artifactId>52n-xml-sosro-v10</artifactId>
-        <version>2.2.1-SNAPSHOT</version>
-        <license>The Apache Software License, Version 2.0</license>
-    </artifact>
-    <artifact>
-        <groupId>org.n52.sensorweb.sos</groupId>
-        <artifactId>coding-json-common</artifactId>
-        <version>5.0.0-SNAPSHOT</version>
-        <license>GNU General Public License, version 2</license>
-    </artifact>-->
-    
-<!--    <artifact>
-        <groupId>org.n52.sensorweb.sos</groupId>
-        <artifactId>coding-json</artifactId>
-        <version>5.0.0-SNAPSHOT</version>
-        <license>GNU General Public License, version 2</license>
-    </artifact>-->
 </license-lookup>

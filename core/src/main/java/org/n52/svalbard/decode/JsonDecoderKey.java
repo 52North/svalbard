@@ -60,8 +60,12 @@ public class JsonDecoderKey implements DecoderKey {
     @Override
     public boolean equals(Object obj) {
         if (obj != null && getClass() != obj.getClass()) {
-            final JsonDecoderKey other = (JsonDecoderKey) obj;
-            return Objects.equal(getType(), other.getType());
+
+            if (obj instanceof JsonDecoderKey) {
+                final JsonDecoderKey other = (JsonDecoderKey) obj;
+                return Objects.equal(getType(), other.getType());
+            }
+            return false;
         }
         return false;
     }

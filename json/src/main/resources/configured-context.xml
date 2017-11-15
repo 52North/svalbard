@@ -21,6 +21,10 @@
        xsi:schemaLocation="http://www.springframework.org/schema/beans
                            http://www.springframework.org/schema/beans/spring-beans-4.3.xsd">
 
+    <!-- ResponseWriterFactory implementations from coding/json -->
+    <!-- moved to iceland
+        <bean class="org.n52.sos.encode.json.JSONResponseWriterFactory"/>-->
+
     <!-- Decoder implementations from coding/json -->
     <bean class="org.n52.svalbard.decode.json.AddressJSONDecoder"/>
     <bean class="org.n52.svalbard.decode.json.BatchRequestDecoder"/>
