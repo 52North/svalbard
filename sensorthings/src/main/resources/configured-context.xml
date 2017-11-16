@@ -29,6 +29,7 @@
     <bean class="org.n52.svalbard.decode.StaGetObservationsWithIdRequestDecoder"/>
 
     <!-- Encoder implementations from svalbard/sensorthings-->
+    <bean class="org.n52.svalbard.encode.StaGetEntitySetsResponseEncoder"/>
     <bean class="org.n52.svalbard.encode.StaDatastreamEncoder"/>
     <bean class="org.n52.svalbard.encode.StaFeatureOfInterestEncoder"/>
 <!--    <bean class="org.n52.svalbard.encode.StaGetDatastreamResponseEncoder"/>-->

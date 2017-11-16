@@ -43,7 +43,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Request encoder for the SensorThings API Observations resource, used by GetObservation operations;
+ * Response encoder for the SensorThings API Observations resource, used by GetObservation operations;
  * transforms SOS Observations into SensorThings Observations.
  *
  * @author <a href="mailto:m.kiesow@52north.org">Martin Kiesow</a>
@@ -120,19 +120,8 @@ public class StaGetObservationResponseEncoder extends JSONEncoder<GetObservation
         staObservation.setFeatureOfInterest(
                 transformFeatureOfInterest(o.getObservationConstellation().getFeatureOfInterest()));
 
-        // test data
-        if (o.getObservationID().equals("1")) {
-            List<String> al = new ArrayList<>(2);
-            al.add("ResultQualityTestString1");
-            al.add("ResultQualityTestString2");
-            staObservation.setResultQuality(al);
+        // TODO add and test "parameters"
 
-            Map<String, String> pa = new HashMap<>(3);
-            pa.put("key1", "value1");
-            pa.put("key2", "value2");
-            pa.put("key3", "value3");
-            staObservation.setParameters(pa);
-        }
         return staObservation;
     }
 
