@@ -27,14 +27,20 @@
     <!-- Decoder implementations from svalbard/sensorthings -->
     <bean class="org.n52.svalbard.decode.StaGetObservationsRequestDecoder"/>
     <bean class="org.n52.svalbard.decode.StaGetObservationsWithIdRequestDecoder"/>
+    <bean class="org.n52.svalbard.decode.StaGetFeaturesOfInterestRequestDecoder"/>
 
     <!-- Encoder implementations from svalbard/sensorthings-->
     <bean class="org.n52.svalbard.encode.StaGetEntitySetsResponseEncoder"/>
     <bean class="org.n52.svalbard.encode.StaDatastreamEncoder"/>
     <bean class="org.n52.svalbard.encode.StaFeatureOfInterestEncoder"/>
+    <bean class="org.n52.svalbard.encode.StaObservationEncoder"/>
 <!--    <bean class="org.n52.svalbard.encode.StaGetDatastreamResponseEncoder"/>-->
     <bean class="org.n52.svalbard.encode.StaGetObservationResponseEncoder"/>
     <bean class="org.n52.svalbard.encode.StaGetObservationByIdResponseEncoder"/>
-    <bean class="org.n52.svalbard.encode.StaObservationEncoder"/>
+    <bean class="org.n52.svalbard.encode.StaGetFeaturesOfInterestResponseEncoder"/>
+
+    <!-- Encoder implementations converting to STA Entities -->
+    <!--<bean class="org.n52.svalbard.encode.StaGetObservationConverter"/>
+    <bean class="org.n52.svalbard.encode.StaGetFeatureOfInterestConverter"/>-->
 
 </beans>

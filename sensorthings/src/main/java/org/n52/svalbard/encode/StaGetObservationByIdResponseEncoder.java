@@ -19,24 +19,15 @@ package org.n52.svalbard.encode;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import org.n52.janmayen.Json;
 import org.n52.janmayen.http.MediaTypes;
-import org.n52.shetland.ogc.gml.AbstractFeature;
-import org.n52.shetland.ogc.gml.CodeType;
 import org.n52.shetland.ogc.om.ObservationStream;
 import org.n52.shetland.ogc.om.OmObservation;
-import org.n52.shetland.ogc.om.features.samplingFeatures.SamplingFeature;
 import org.n52.shetland.ogc.ows.exception.OwsExceptionReport;
 import org.n52.shetland.ogc.sos.Sos1Constants;
 import org.n52.shetland.ogc.sos.Sos2Constants;
 import org.n52.shetland.ogc.sos.response.GetObservationByIdResponse;
 import org.n52.shetland.ogc.sta.StaConstants;
-import org.n52.shetland.ogc.sta.StaFeatureOfInterest;
-import org.n52.shetland.ogc.sta.StaObservation;
 import org.n52.svalbard.encode.json.JSONEncoder;
 import org.n52.svalbard.encode.exception.EncodingException;
 import org.slf4j.Logger;
@@ -65,17 +56,19 @@ public class StaGetObservationByIdResponseEncoder extends JSONEncoder<GetObserva
 
         // encode observations
         int observationCount = 0;
+        Encoder converter = new StaObservationConverter();
+
         try {
             while (t.getObservationCollection().hasNext()) {
                 OmObservation o = t.getObservationCollection().next();
                 if (o.getValue() instanceof ObservationStream) {
                     ObservationStream value = (ObservationStream) o.getValue();
                         while (value.hasNext()) {
-                            dsArray.add(encodeObjectToJson(transformObservation(value.next())));
+                            dsArray.add(encodeObjectToJson(converter.encode(value.next())));
                             observationCount++;
                     }
                 } else {
-                    dsArray.add(encodeObjectToJson(transformObservation(o)));
+                    dsArray.add(encodeObjectToJson(converter.encode(o)));
                     observationCount++;
                 }
             }
@@ -94,60 +87,5 @@ public class StaGetObservationByIdResponseEncoder extends JSONEncoder<GetObserva
         encodeResponse(n, t);
 
         return n;
-    }
-
-    /**
-     * transform a SOS Observation into a STA Observation
-     * @param o SOS Observation
-     * @return SensorThings Observation
-     */
-    private StaObservation transformObservation(OmObservation o) {
-
-        StaObservation staObservation = new StaObservation(o.getObservationID());
-
-        staObservation.setPhenomenonTime(o.getPhenomenonTime());
-        staObservation.setResult(o.getValue().getValue().getValue().toString());
-
-        staObservation.setResultTime(o.getResultTime());
-//        private String resultQuality; // [0..n]
-        staObservation.setValidTime(o.getValidTime());
-//        private String parameters; // [0..1]
-
-        // TODO create Datastream id from procedure, observedProperty, offering and featureOfInterest
-        // not necessary for GET Observations
-        //staObservation.setDatastream(datastreamID);
-
-        staObservation.setFeatureOfInterest(
-                transformFeatureOfInterest(o.getObservationConstellation().getFeatureOfInterest()));
-
-        // test data
-        if (o.getObservationID().equals("1")) {
-            List<String> al = new ArrayList<>(2);
-            al.add("ResultQualityTestString1");
-            al.add("ResultQualityTestString2");
-            staObservation.setResultQuality(al);
-
-            Map<String, String> pa = new HashMap<>(3);
-            pa.put("key1", "value1");
-            pa.put("key2", "value2");
-            pa.put("key3", "value3");
-            staObservation.setParameters(pa);
-        }
-        return staObservation;
-    }
-
-    private StaFeatureOfInterest transformFeatureOfInterest(AbstractFeature f) {
-
-        StringBuilder name = new StringBuilder();
-        f.getName().forEach((CodeType ct) -> name.append(ct.getValue()));
-
-        StaFeatureOfInterest staFOI = new StaFeatureOfInterest(f.getIdentifier(), name.toString(),
-                f.getDescription(), StaConstants.SPATIAL_ENCODING_TYPE_GEOJSON);
-
-        if (f instanceof SamplingFeature) {
-            staFOI.setFeature(((SamplingFeature) f).getGeometry());
-        }
-
-        return staFOI;
     }
 }

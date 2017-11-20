@@ -18,10 +18,8 @@ package org.n52.svalbard.encode;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.vividsolutions.jts.geom.Geometry;
 import org.n52.shetland.ogc.sta.StaConstants;
 import org.n52.shetland.ogc.sta.StaFeatureOfInterest;
-import org.n52.svalbard.coding.json.JSONConstants;
 import org.n52.svalbard.encode.json.JSONEncoder;
 import org.n52.svalbard.encode.json.GeoJSONEncoder;
 import org.n52.svalbard.encode.exception.EncodingException;
@@ -30,7 +28,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * SensorThings FeatureOfInterest to JSON
- * 
+ *
  * @author <a href="mailto:m.kiesow@52north.org">Martin Kiesow</a>
  */
 public class StaFeatureOfInterestEncoder extends JSONEncoder<StaFeatureOfInterest> {
@@ -63,22 +61,23 @@ public class StaFeatureOfInterestEncoder extends JSONEncoder<StaFeatureOfInteres
             .put(StaConstants.Parameter.description.name(), featureOfInterest.getDescription())
             .put(StaConstants.Parameter.encodingType.name(), featureOfInterest.getEncodingType());
 
-        json.set(StaConstants.Parameter.feature.name(), encodeFeature(geoEncoder, featureOfInterest.getFeature()));
+//        json.set(StaConstants.Parameter.feature.name(), encodeFeature(geoEncoder, featureOfInterest.getFeature()));
+        json.set(StaConstants.Parameter.feature.name(), encodeObjectToJson(featureOfInterest.getFeature()));
 
         return json;
     }
 
-    private JsonNode encodeFeature(GeoJSONEncoder encoder, Geometry g) {
-        ObjectNode json = nodeFactory().objectNode();
-
-        json.put(StaConstants.FoiParameter.type.name(), JSONConstants.POINT);
-
-        try {
-            json.set(StaConstants.FoiParameter.geometry.name(), encoder.encode(g));
-        } catch (EncodingException ex) {
-            LOG.error("Error when encoding SensorThings FeatureOfInterest geometry.", ex);
-        }
-
-        return json;
-    }
+//    private JsonNode encodeFeature(GeoJSONEncoder encoder, Geometry g) {
+//        ObjectNode json = nodeFactory().objectNode();
+//
+//        json.put(StaConstants.FoiParameter.type.name(), JSONConstants.POINT);
+//
+//        try {
+//            json.set(StaConstants.FoiParameter.geometry.name(), encoder.encode(g));
+//        } catch (EncodingException ex) {
+//            LOG.error("Error when encoding SensorThings FeatureOfInterest geometry.", ex);
+//        }
+//
+//        return json;
+//    }
 }
