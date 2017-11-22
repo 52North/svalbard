@@ -18,10 +18,12 @@ package org.n52.svalbard.encode;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.CoordinateFilter;
 import org.n52.shetland.ogc.sta.StaConstants;
 import org.n52.shetland.ogc.sta.StaFeatureOfInterest;
 import org.n52.svalbard.encode.json.JSONEncoder;
-import org.n52.svalbard.encode.json.GeoJSONEncoder;
 import org.n52.svalbard.encode.exception.EncodingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,7 +45,6 @@ public class StaFeatureOfInterestEncoder extends JSONEncoder<StaFeatureOfInteres
     public JsonNode encodeJSON(StaFeatureOfInterest featureOfInterest) throws EncodingException {
 
         ObjectNode json = nodeFactory().objectNode();
-        GeoJSONEncoder geoEncoder = new GeoJSONEncoder();
 
         json.put(StaConstants.ANNOTATION_ID, featureOfInterest.getId())
             .put(StaConstants.ANNOTATION_SELF_LINK, featureOfInterest.getSelfLink());
@@ -61,23 +62,26 @@ public class StaFeatureOfInterestEncoder extends JSONEncoder<StaFeatureOfInteres
             .put(StaConstants.Parameter.description.name(), featureOfInterest.getDescription())
             .put(StaConstants.Parameter.encodingType.name(), featureOfInterest.getEncodingType());
 
-//        json.set(StaConstants.Parameter.feature.name(), encodeFeature(geoEncoder, featureOfInterest.getFeature()));
-        json.set(StaConstants.Parameter.feature.name(), encodeObjectToJson(featureOfInterest.getFeature()));
+        json.set(StaConstants.Parameter.feature.name(), encodeObjectToJson(switchLatLon(featureOfInterest.getFeature())));
 
         return json;
     }
 
-//    private JsonNode encodeFeature(GeoJSONEncoder encoder, Geometry g) {
-//        ObjectNode json = nodeFactory().objectNode();
-//
-//        json.put(StaConstants.FoiParameter.type.name(), JSONConstants.POINT);
-//
-//        try {
-//            json.set(StaConstants.FoiParameter.geometry.name(), encoder.encode(g));
-//        } catch (EncodingException ex) {
-//            LOG.error("Error when encoding SensorThings FeatureOfInterest geometry.", ex);
-//        }
-//
-//        return json;
-//    }
+    private Geometry switchLatLon(Geometry geometry) {
+        
+        Geometry g = (Geometry) geometry.clone();
+        g.apply(new SwitchCoordinateFilter());
+        
+        return g;
+    }
+    
+    private class SwitchCoordinateFilter implements CoordinateFilter  {
+        
+        @Override
+        public void filter(Coordinate coordinates) {
+            double x = coordinates.x;
+            coordinates.x = coordinates.y;
+            coordinates.y = x;
+        }
+    }
 }
