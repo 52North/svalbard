@@ -53,11 +53,11 @@ public class StaObservationConverter extends StaAbstractEntityConverter<StaObser
         // TODO create Datastream id from procedure, observedProperty, offering and featureOfInterest
         // not necessary for GET Observations
         //staObservation.setDatastream(datastreamID);
-
-        StaFeatureOfInterestConverter converter = new StaFeatureOfInterestConverter();
-        staObservation.setFeatureOfInterest(
-                converter.encode(o.getObservationConstellation().getFeatureOfInterest()));
-
+        if (o.getObservationConstellation().isSetFeatureOfInterest()) {
+            StaFeatureOfInterestConverter converter = new StaFeatureOfInterestConverter();
+            staObservation.setFeatureOfInterest(
+                    converter.encode(o.getObservationConstellation().getFeatureOfInterest()));
+        }
         // TODO add and test "parameters"
 
         return staObservation;

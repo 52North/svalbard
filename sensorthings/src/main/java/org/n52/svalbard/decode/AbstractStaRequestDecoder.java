@@ -29,7 +29,7 @@ import org.n52.svalbard.decode.json.JSONDecoder;
 
 /**
  * SensorThings API request decoder
- * 
+ *
  * @author <a href="mailto:m.kiesow@52north.org">Martin Kiesow</a>
  */
 public abstract class AbstractStaRequestDecoder<T extends OwsServiceRequest> extends JSONDecoder<T> {

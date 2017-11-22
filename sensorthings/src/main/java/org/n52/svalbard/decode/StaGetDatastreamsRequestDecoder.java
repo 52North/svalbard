@@ -25,6 +25,7 @@ import org.n52.svalbard.decode.json.AbstractSosRequestDecoder;
 import org.n52.svalbard.decode.exception.DecodingException;
 
 /**
+ * SensorThings API decoder for Datastream requests.
  *
  * @author <a href="mailto:m.kiesow@52north.org">Martin Kiesow</a>
  */

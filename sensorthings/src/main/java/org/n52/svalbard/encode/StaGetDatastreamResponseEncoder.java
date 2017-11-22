@@ -62,8 +62,12 @@ public class StaGetDatastreamResponseEncoder extends JSONEncoder<GetObservationR
 
     public StaGetDatastreamResponseEncoder() {
 
+        // TODO differ GET Observations from GET Datastreams
+//        super(GetObservationResponse.class,
+//                new OperationResponseEncoderKey(SosConstants.SOS, Sos2Constants.SERVICEVERSION,
+//                        Sos2Constants.EN_GET_OBSERVATION, MediaTypes.APPLICATION_STA));
         super(GetObservationResponse.class,
-                new OperationResponseEncoderKey(SosConstants.SOS, Sos2Constants.SERVICEVERSION,
+                new OperationResponseEncoderKey(StaConstants.SERVICE_NAME, StaConstants.VERSION_1_0,
                         Sos2Constants.EN_GET_OBSERVATION, MediaTypes.APPLICATION_STA));
     }
 
@@ -209,7 +213,7 @@ public class StaGetDatastreamResponseEncoder extends JSONEncoder<GetObservationR
                 transformFeatureOfInterest(o.getObservationConstellation().getFeatureOfInterest()));
 
         // test data
-        if (o.getObservationID().equals("1")) {
+        if (o.getObservationID() != null && o.getObservationID().equals("1")) {
             List<String> al = new ArrayList<>(2);
             al.add("ResultQualityTestString1");
             al.add("ResultQualityTestString2");
