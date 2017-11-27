@@ -17,12 +17,7 @@
 package org.n52.svalbard.encode;
 
 import org.n52.janmayen.http.MediaType;
-import org.n52.shetland.ogc.gml.AbstractFeature;
-import org.n52.shetland.ogc.gml.CodeType;
 import org.n52.shetland.ogc.om.OmObservation;
-import org.n52.shetland.ogc.om.features.samplingFeatures.SamplingFeature;
-import org.n52.shetland.ogc.sta.StaConstants;
-import org.n52.shetland.ogc.sta.StaFeatureOfInterest;
 import org.n52.shetland.ogc.sta.StaObservation;
 import org.n52.svalbard.encode.exception.EncodingException;
 
@@ -40,7 +35,7 @@ public class StaObservationConverter extends StaAbstractEntityConverter<StaObser
     @Override
     public StaObservation encode(OmObservation o) throws EncodingException {
 
-        StaObservation staObservation = new StaObservation(o.getObservationID());
+        StaObservation staObservation = new StaObservation(Long.parseLong(o.getObservationID()));
 
         staObservation.setPhenomenonTime(o.getPhenomenonTime());
         staObservation.setResult(o.getValue().getValue().getValue().toString());

@@ -62,21 +62,24 @@ public class StaFeatureOfInterestEncoder extends JSONEncoder<StaFeatureOfInteres
             .put(StaConstants.Parameter.description.name(), featureOfInterest.getDescription())
             .put(StaConstants.Parameter.encodingType.name(), featureOfInterest.getEncodingType());
 
-        json.set(StaConstants.Parameter.feature.name(), encodeObjectToJson(switchLatLon(featureOfInterest.getFeature())));
+        if (featureOfInterest.getFeature() != null) {
+            // TODO switch coordinates depending on SRID
+            json.set(StaConstants.Parameter.feature.name(), encodeObjectToJson(switchLatLon(featureOfInterest.getFeature())));
+        }
 
         return json;
     }
 
     private Geometry switchLatLon(Geometry geometry) {
-        
+
         Geometry g = (Geometry) geometry.clone();
         g.apply(new SwitchCoordinateFilter());
-        
+
         return g;
     }
-    
+
     private class SwitchCoordinateFilter implements CoordinateFilter  {
-        
+
         @Override
         public void filter(Coordinate coordinates) {
             double x = coordinates.x;

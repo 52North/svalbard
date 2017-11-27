@@ -92,10 +92,10 @@ public class StaGetDatastreamResponseEncoder extends JSONEncoder<GetObservationR
                     String ot = getObservationType(o);
 
                     if (ot.equals(StaConstants.OBSERVATION_TYPE_TRUTH_OBSERVATION)) {
-                        datastreams.add(new StaDatastream(id, o.getObservationConstellation(), ot, transformObservation(o, id)));
+//id                        datastreams.add(new StaDatastream(id, o.getObservationConstellation(), ot, transformObservation(o, id)));
                     } else {
                         UoM uom = o.getValue().getValue().getUnitObject();
-                        datastreams.add(new StaDatastream(id, o.getObservationConstellation(), ot, uom, transformObservation(o, id)));
+//id                        datastreams.add(new StaDatastream(id, o.getObservationConstellation(), ot, uom, transformObservation(o, id)));
                     }
 
                 } else {
@@ -108,7 +108,7 @@ public class StaGetDatastreamResponseEncoder extends JSONEncoder<GetObservationR
                         StaDatastream ds = dsIterator.next();
 
                         if (o.getObservationConstellation().equals(ds.getObservationConstellation())) {
-                            ds.addObservation(transformObservation(o, ds.getId()));
+//id                            ds.addObservation(transformObservation(o, ds.getId()));
                             found = true;
                         }
                     }
@@ -119,10 +119,10 @@ public class StaGetDatastreamResponseEncoder extends JSONEncoder<GetObservationR
                         String ot = getObservationType(o);
 
                         if (ot.equals(StaConstants.OBSERVATION_TYPE_TRUTH_OBSERVATION)) {
-                            datastreams.add(new StaDatastream(id, o.getObservationConstellation(), ot, transformObservation(o, id)));
+//id                            datastreams.add(new StaDatastream(id, o.getObservationConstellation(), ot, transformObservation(o, id)));
                         } else {
                             UoM uom = o.getValue().getValue().getUnitObject();
-                            datastreams.add(new StaDatastream(id, o.getObservationConstellation(), ot, uom, transformObservation(o, id)));
+//id                            datastreams.add(new StaDatastream(id, o.getObservationConstellation(), ot, uom, transformObservation(o, id)));
                         }
                     }
                 }
@@ -197,7 +197,8 @@ public class StaGetDatastreamResponseEncoder extends JSONEncoder<GetObservationR
      */
     private StaObservation transformObservation(OmObservation o, String datastreamID) {
 
-        StaObservation staObservation = new StaObservation(o.getObservationID());
+//id        StaObservation staObservation = new StaObservation(o.getObservationID());
+        StaObservation staObservation = null;
 
         staObservation.setPhenomenonTime(o.getPhenomenonTime());
         staObservation.setResult(o.getValue().getValue().getValue().toString());
@@ -233,8 +234,12 @@ public class StaGetDatastreamResponseEncoder extends JSONEncoder<GetObservationR
         StringBuilder name = new StringBuilder();
         f.getName().forEach((CodeType ct) -> name.append(ct.getValue()));
 
-        StaFeatureOfInterest staFOI = new StaFeatureOfInterest(f.getIdentifier(), name.toString(),
-                f.getDescription(), StaConstants.SPATIAL_ENCODING_TYPE_GEOJSON);
+//id        StaFeatureOfInterest staFOI = new StaFeatureOfInterest(f.getIdentifier());
+        StaFeatureOfInterest staFOI = null;
+
+        staFOI.setName(name.toString());
+        staFOI.setDescription(f.getDescription());
+        staFOI.setEncodingType(StaConstants.SPATIAL_ENCODING_TYPE_GEOJSON);
 
         if (f instanceof SamplingFeature) {
             staFOI.setFeature(((SamplingFeature) f).getGeometry());

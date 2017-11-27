@@ -38,11 +38,11 @@ import org.slf4j.LoggerFactory;
  *
  * @author <a href="mailto:m.kiesow@52north.org">Martin Kiesow</a>
  */
-public class StaGetFeaturesOfInterestResponseEncoder extends JSONEncoder<GetFeatureOfInterestResponse> {
+public class StaGetFeatureOfInterestResponseEncoder extends JSONEncoder<GetFeatureOfInterestResponse> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(StaGetFeaturesOfInterestResponseEncoder.class);
+    private static final Logger LOG = LoggerFactory.getLogger(StaGetFeatureOfInterestResponseEncoder.class);
 
-    public StaGetFeaturesOfInterestResponseEncoder() {
+    public StaGetFeatureOfInterestResponseEncoder() {
 
         super(GetFeatureOfInterestResponse.class,
             new OperationResponseEncoderKey(Sos1Constants.SOS, Sos2Constants.SERVICEVERSION,

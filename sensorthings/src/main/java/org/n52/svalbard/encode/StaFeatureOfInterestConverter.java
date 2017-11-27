@@ -41,8 +41,10 @@ public class StaFeatureOfInterestConverter extends StaAbstractEntityConverter<St
         StringBuilder name = new StringBuilder();
         feature.getName().forEach((CodeType ct) -> name.append(ct.getValue()));
 
-        StaFeatureOfInterest staFOI = new StaFeatureOfInterest(feature.getIdentifier(), name.toString(),
-                feature.getDescription(), StaConstants.SPATIAL_ENCODING_TYPE_GEOJSON);
+        StaFeatureOfInterest staFOI = new StaFeatureOfInterest(feature.getFeatureId());
+        staFOI.setName(name.toString());
+        staFOI.setDescription(feature.getDescription());
+        staFOI.setEncodingType(StaConstants.SPATIAL_ENCODING_TYPE_GEOJSON);
 
         if (feature instanceof SamplingFeature) {
             staFOI.setFeature(((SamplingFeature) feature).getGeometry());
