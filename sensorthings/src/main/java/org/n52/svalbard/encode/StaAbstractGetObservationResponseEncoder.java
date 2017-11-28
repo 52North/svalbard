@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Abstract response encoder for the SensorThings API Observations resource.
  *
+ * @param <T> AbstractObservationResponse
  * @author <a href="mailto:m.kiesow@52north.org">Martin Kiesow</a>
  */
 public abstract class StaAbstractGetObservationResponseEncoder<T extends AbstractObservationResponse> extends JSONEncoder<T> {

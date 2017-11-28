@@ -18,29 +18,28 @@ package org.n52.svalbard.encode;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import java.util.Base64;
 import org.n52.shetland.ogc.sta.StaConstants;
-import org.n52.shetland.ogc.sta.StaSensor;
+import org.n52.shetland.ogc.sta.StaObservedProperty;
 import org.n52.svalbard.encode.json.JSONEncoder;
 import org.n52.svalbard.encode.exception.EncodingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * SensorThings Sensor to JSON
+ * SensorThings ObservedProperty to JSON
  *
  * @author <a href="mailto:m.kiesow@52north.org">Martin Kiesow</a>
  */
-public class StaSensorEncoder extends JSONEncoder<StaSensor> {
+public class StaObservedPropertyEncoder extends JSONEncoder<StaObservedProperty> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(StaSensorEncoder.class);
+    private static final Logger LOG = LoggerFactory.getLogger(StaObservedPropertyEncoder.class);
 
-    public StaSensorEncoder() {
-        super(StaSensor.class);
+    public StaObservedPropertyEncoder() {
+        super(StaObservedProperty.class);
     }
 
     @Override
-    public JsonNode encodeJSON(StaSensor sensor) throws EncodingException {
+    public JsonNode encodeJSON(StaObservedProperty sensor) throws EncodingException {
 
         ObjectNode json = nodeFactory().objectNode();
 
@@ -58,27 +57,7 @@ public class StaSensorEncoder extends JSONEncoder<StaSensor> {
         // parameters, mandatory
         json.put(StaConstants.Parameter.name.name(), sensor.getName())
             .put(StaConstants.Parameter.description.name(), sensor.getDescription())
-            .put(StaConstants.Parameter.encodingType.name(), sensor.getEncodingType());
-
-        // TODO encode metadata (as file link or SensorML 2.0, but in xml encoding)
-        if (sensor.getMetadata() != null && !sensor.getMetadata().equals("")) {
-
-            if (sensor.getEncodingType().equals(StaConstants.SENSOR_ENCODING_TYPE_SENSORML_20)) {
-
-                String metadata = Base64.getEncoder().encodeToString(((String) sensor.getMetadata()).getBytes());
-                json.put(StaConstants.Parameter.metadata.name(), metadata);
-
-            } else if (sensor.getEncodingType().equals(StaConstants.SENSOR_ENCODING_TYPE_PDF)) {
-
-                json.put(StaConstants.Parameter.metadata.name(), (String) sensor.getMetadata());
-            } else {
-                // TODO throw exception
-                LOG.warn("Sensor metadata could not be encoded: encoding type not supported");
-            }
-        } else {
-            // TODO throw exception
-            LOG.warn("Sensor metadata could not be encoded: no metadata");
-        }
+            .put(StaConstants.Parameter.definition.name(), sensor.getDefinition());
 
         return json;
     }

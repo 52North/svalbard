@@ -23,47 +23,47 @@ import java.util.Iterator;
 import org.n52.janmayen.Json;
 import org.n52.janmayen.http.MediaTypes;
 import org.n52.shetland.ogc.sta.StaConstants;
-import org.n52.shetland.ogc.sta.StaSensor;
-import org.n52.shetland.ogc.sta.response.StaGetSensorsResponse;
+import org.n52.shetland.ogc.sta.StaObservedProperty;
+import org.n52.shetland.ogc.sta.response.StaGetObservedPropertiesResponse;
 import org.n52.svalbard.encode.json.JSONEncoder;
 import org.n52.svalbard.encode.exception.EncodingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Request encoder for the SensorThings API Sensor resource.
+ * Request encoder for the SensorThings API ObservedProperty resource.
  *
  * @author <a href="mailto:m.kiesow@52north.org">Martin Kiesow</a>
  */
-public class StaGetSensorsResponseEncoder extends JSONEncoder<StaGetSensorsResponse> {
+public class StaGetObservedPropertiesResponseEncoder extends JSONEncoder<StaGetObservedPropertiesResponse> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(StaGetSensorsResponseEncoder.class);
+    private static final Logger LOG = LoggerFactory.getLogger(StaGetObservedPropertiesResponseEncoder.class);
 
-    public StaGetSensorsResponseEncoder() {
+    public StaGetObservedPropertiesResponseEncoder() {
 
-        super(StaGetSensorsResponse.class,
+        super(StaGetObservedPropertiesResponse.class,
             new OperationResponseEncoderKey(StaConstants.SERVICE_NAME, StaConstants.VERSION_1_0,
-                StaConstants.Operation.GET_SENSORS, MediaTypes.APPLICATION_STA));
+                StaConstants.Operation.GET_OBSERVED_PROPERTIES, MediaTypes.APPLICATION_STA));
     }
 
-    protected void encodeResponse(ObjectNode json, StaGetSensorsResponse t) throws EncodingException {
+    protected void encodeResponse(ObjectNode json, StaGetObservedPropertiesResponse t) throws EncodingException {
 
         // add nodes
         ArrayNode array = json.putArray(StaConstants.VALUES);
 
         // encode entities
-        Iterator<StaSensor> iterator = t.getSensors().iterator();
+        Iterator<StaObservedProperty> iterator = t.getObservedProperties().iterator();
 
         while(iterator.hasNext()) {
             array.add(encodeObjectToJson(iterator.next()));
         }
 
         // add basic information
-        json.put(StaConstants.ANNOTATION_COUNT, t.getSensors().size());
+        json.put(StaConstants.ANNOTATION_COUNT, t.getObservedProperties().size());
     }
 
     @Override
-    public JsonNode encodeJSON(StaGetSensorsResponse t) throws EncodingException {
+    public JsonNode encodeJSON(StaGetObservedPropertiesResponse t) throws EncodingException {
 
         ObjectNode n = Json.nodeFactory().objectNode();
         encodeResponse(n, t);
