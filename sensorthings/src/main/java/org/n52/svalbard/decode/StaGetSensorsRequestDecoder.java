@@ -172,5 +172,4 @@ public class StaGetSensorsRequestDecoder extends AbstractStaRequestDecoder<StaGe
     public void setQueryOptions(Map<StaConstants.QueryOption, String> queryOptions) {
         this.queryOptions = queryOptions;
     }
-
 }

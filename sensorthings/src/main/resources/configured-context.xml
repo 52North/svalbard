@@ -21,10 +21,8 @@
        xsi:schemaLocation="http://www.springframework.org/schema/beans
                            http://www.springframework.org/schema/beans/spring-beans-4.1.xsd">
 
-    <!-- ResponseWriterFactory implementations from coding/json -->
-    <!--    <bean class="org.n52.sos.encode.json.JSONResponseWriterFactory"/>-->
-
     <!-- Decoder implementations from svalbard/sensorthings -->
+    <bean class="org.n52.svalbard.decode.StaGetDatastreamsRequestDecoder"/>
     <bean class="org.n52.svalbard.decode.StaGetObservationsRequestDecoder"/>
     <bean class="org.n52.svalbard.decode.StaGetObservationsWithIdRequestDecoder"/>
     <bean class="org.n52.svalbard.decode.StaGetFeaturesOfInterestRequestDecoder"/>
@@ -38,8 +36,8 @@
     <bean class="org.n52.svalbard.encode.StaSensorEncoder"/>
     <bean class="org.n52.svalbard.encode.StaObservedPropertyEncoder"/>
 
-<!--    <bean class="org.n52.svalbard.encode.StaGetDatastreamResponseEncoder"/>-->
     <bean class="org.n52.svalbard.encode.StaGetEntitySetsResponseEncoder"/>
+    <bean class="org.n52.svalbard.encode.StaGetDatastreamsResponseEncoder"/>
     <bean class="org.n52.svalbard.encode.StaGetObservationResponseEncoder"/>
     <bean class="org.n52.svalbard.encode.StaGetObservationByIdResponseEncoder"/>
     <bean class="org.n52.svalbard.encode.StaGetFeatureOfInterestResponseEncoder"/>
@@ -50,7 +48,6 @@
     <!--
     <bean class="org.n52.svalbard.encode.StaObservationConverter"/>
     <bean class="org.n52.svalbard.encode.StaFeatureOfInterestConverter"/>
-    <bean class="org.n52.svalbard.encode.StaSensorConverter"/>
     -->
 
 </beans>
